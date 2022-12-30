@@ -1,0 +1,19 @@
+
+name "kisv"
+platforms "windows"
+
+buildType "debug" {
+	buildOptions "debugMode" "debugInfo" "alwaysStackFrame" "stackStomping" "warningsAsErrors"
+}
+buildType "release" {
+	buildOptions "releaseMode" "optimize" "inline" "noBoundsCheck"
+}
+
+configuration "test" {
+	targetType "executable"
+	targetName "demo"
+}
+configuration "library" {
+	targetType "library"
+	excludedSourceFiles "src/demo.d" "src/demo_*.d"
+}
