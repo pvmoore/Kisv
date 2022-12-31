@@ -2,6 +2,11 @@ module kisv.helper.QueueHelper;
 
 import kisv.all;
 
+struct QueueInfo {
+    uint index;
+    uint numQueues;
+}
+
 final class QueueHelper {
 private:
     KisvContext context;
@@ -11,18 +16,18 @@ public:
         this.context = context;
         this.queueFamilies = context.physicalDevice.queueFamilies;
     }
-    QueueFamily[] find(VkQueueFlagBits withFlags, VkQueueFlagBits withoutFlags = 0.as!VkQueueFlagBits) {
-        QueueFamily[] list;
+    QueueInfo[] find(VkQueueFlagBits withFlags, VkQueueFlagBits withoutFlags = 0.as!VkQueueFlagBits) {
+        QueueInfo[] list;
         foreach(i, f; queueFamilies) {
             if(f.queueCount==0) continue;
             if((f.queueFlags & withoutFlags) != 0) continue;
             if((f.queueFlags & withFlags) == withFlags) {
-                list ~= QueueFamily(i.as!uint, f.queueCount);
+                list ~= QueueInfo(i.as!uint, f.queueCount);
             }
         }
         return list;
     }
-    bool supports(QueueFamily family, VkQueueFlagBits flags) {
-        return (queueFamilies[family.index].queueFlags & flags) == flags;
+    bool supports(uint family, VkQueueFlagBits flags) {
+        return (queueFamilies[family].queueFlags & flags) == flags;
     }
 }

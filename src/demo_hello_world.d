@@ -9,8 +9,8 @@ final class HelloWorld : DemoApplication {
 private:
     VkClearValue bgColour;
     KisvContext context;
-    QueueFamily graphicsQueueFamily;
-    QueueFamily transferQueueFamily;
+    uint graphicsQueueFamily;
+    uint transferQueueFamily;
 
     KisvProperties props = {
         appName: "HelloWorld",
@@ -55,8 +55,7 @@ public:
             // Look for a graphics queue family
             auto graphics = h.find(VK_QUEUE_GRAPHICS_BIT);
             throwIf(graphics.length == 0, "No graphics queues available");
-            graphicsQueueFamily = graphics[0];
-            graphicsQueueFamily.numQueues = 1;
+            graphicsQueueFamily = graphics[0].index;
             log("Selected graphics queue family %s", graphicsQueueFamily);
 
             // Look for a transfer queue family
@@ -66,8 +65,7 @@ public:
             } else {
                 auto transfer = h.find(VK_QUEUE_TRANSFER_BIT);
                 throwIf(transfer.length == 0, "No transfer queues available");
-                transferQueueFamily = transfer[0];
-                transferQueueFamily.numQueues = 1;
+                transferQueueFamily = transfer[0].index;
             }
             log("Selected transfer queue family %s", transferQueueFamily);
         });
@@ -93,20 +91,20 @@ public:
         logStructure(rtpFeatures);
         logStructure(bdaFeatures);
 
-        if(graphicsQueueFamily.index == transferQueueFamily.index) {
-            // Create device with 1 queue
-            context.createLogicalDevice(graphicsQueueFamily);
-        } else {
-            // Create device with 2 queues
-            context.createLogicalDevice(graphicsQueueFamily, transferQueueFamily);
+        uint[uint] queueRequest;
+        queueRequest[graphicsQueueFamily]++;
+        if(transferQueueFamily != graphicsQueueFamily) {
+            queueRequest[transferQueueFamily]++;
         }
+        context.createLogicalDevice(queueRequest);
+
         context.createWindow();
 
         context.createStandardRenderPass();
 
-        context.createTransferCommandPool(transferQueueFamily.index);
+        context.createTransferHelper(transferQueueFamily);
 
-        context.createRenderLoop(graphicsQueueFamily.index);
+        context.createRenderLoop(graphicsQueueFamily);
 
         initialiseScene();
 
@@ -144,7 +142,7 @@ private:
         cmd.end();
 
             /// Submit our render buffer
-        context.getQueue(graphicsQueueFamily.index, 0)
+        context.getQueue(graphicsQueueFamily, 0)
                .submit(
             [cmd],                                           // VkCommandBuffers
             [frame.imageAvailable],                          // wait semaphores

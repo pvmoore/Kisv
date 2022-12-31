@@ -1,4 +1,4 @@
-module kisv.util.create_util;
+module kisv.util.command_pool_util;
 
 import kisv.all;
 
@@ -39,14 +39,6 @@ VkCommandBuffer allocCommandBuffer(VkDevice device,
     return buffers[0];
 }
 
-VkSemaphore createSemaphore(VkDevice device) {
-    VkSemaphoreCreateInfo info = {
-        sType: VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-        flags: 0
-    };
-
-    VkSemaphore semaphore;
-    check(vkCreateSemaphore(device, &info, null, &semaphore));
-    return semaphore;
+void freeCommandBuffer(VkDevice device, VkCommandPool pool, VkCommandBuffer buffer) {
+    vkFreeCommandBuffers(device, pool, 1, &buffer);
 }
-

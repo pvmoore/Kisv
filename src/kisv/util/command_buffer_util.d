@@ -1,4 +1,4 @@
-module kisv.util.command_util;
+module kisv.util.command_buffer_util;
 
 import kisv.all;
 

@@ -22,3 +22,14 @@ void submit(VkQueue queue,
 
     check(vkQueueSubmit(queue, 1, &info, fence));
 }
+
+void submitAndWaitFor(VkQueue queue, VkCommandBuffer cmd, KisvContext context) {
+    auto fence = createFence(context.device, false);
+    queue.submit([cmd], fence);
+    waitForFence(context.device, fence);
+    vkDestroyFence(context.device, fence, null);
+}
+
+void submit(VkQueue queue, VkCommandBuffer[] cmdBuffers, VkFence fence) {
+    queue.submit(cmdBuffers, null, null, null, fence);
+}

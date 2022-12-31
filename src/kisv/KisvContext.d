@@ -9,12 +9,12 @@ private:
     VkQueue[][uint] queuesMap;
     ShaderHelper shaders;
     KisvRenderLoop renderLoop;
+    TransferHelper transferHelper;
 public:
     KisvProperties props;
     VkInstance instance;
     VkDevice device;
     VkRenderPass renderPass;
-    VkCommandPool transferCP;
 
     KisvPhysicalDevice physicalDevice;
     KisvWindow window;
@@ -139,7 +139,7 @@ public:
             vkDeviceWaitIdle(device);
 
             if(renderLoop) renderLoop.destroy();
-            if(transferCP) vkDestroyCommandPool(device, transferCP, null);
+            if(transferHelper) transferHelper.destroy();
             if(window) window.destroy();
             if(renderPass) vkDestroyRenderPass(device, renderPass, null);
             vkDestroyDevice(device, null);
@@ -173,20 +173,23 @@ public:
         func(helper);
         this.features2 = helper.query();
     }
-    void createLogicalDevice(QueueFamily[] queues...) {
-        auto queueCreateInfos = new VkDeviceQueueCreateInfo[queues.length];
+    void createLogicalDevice(uint[uint] queuesPerFamily) {
+        VkDeviceQueueCreateInfo[] queueCreateInfos;
 
-        foreach(i, q; queues) {
-            float[] priorities = new float[q.numQueues];
+        foreach(entry; queuesPerFamily.byKeyValue()) {
+            uint family = entry.key();
+            uint numQueues = entry.value();
+
+            float[] priorities = new float[numQueues];
             priorities[] = 1.0f;
 
             VkDeviceQueueCreateInfo queueInfo = {
                 sType: VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-                queueFamilyIndex: q.index,
-                queueCount: q.numQueues,
+                queueFamilyIndex: family,
+                queueCount: numQueues,
                 pQueuePriorities: priorities.ptr
             };
-            queueCreateInfos[i] = queueInfo;
+            queueCreateInfos ~= queueInfo;
         }
 
         auto extensions = props.deviceExtensions.map!(it=>it.toStringz()).array;
@@ -204,13 +207,16 @@ public:
         check(vkCreateDevice(physicalDevice.handle, &createInfo, null, &device));
 
         // Fetch the queues
-        foreach(q; queues) {
-            VkQueue[] queueList = new VkQueue[q.numQueues];
+        foreach(entry; queuesPerFamily.byKeyValue()) {
+            uint family = entry.key();
+            uint numQueues = entry.value();
 
-            foreach(i; 0..q.numQueues) {
-                vkGetDeviceQueue(device, q.index, i.as!int, &queueList[i]);
+            VkQueue[] queueList = new VkQueue[numQueues];
+
+            foreach(i; 0..numQueues) {
+                vkGetDeviceQueue(device, family, i.as!int, &queueList[i]);
             }
-            queuesMap[q.index] = queueList;
+            queuesMap[family] = queueList;
         }
     }
     void createWindow(VkImageUsageFlagBits usage = 0.as!VkImageUsageFlagBits) {
@@ -221,9 +227,8 @@ public:
         this.renderPass = createRenderPass(this);
         window.createFrameBuffers(renderPass);
     }
-    void createTransferCommandPool(uint family) {
-        log("Creating transfer command pool");
-        transferCP = createCommandPool(device, family, VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
+    void createTransferHelper(uint family) {
+        this.transferHelper = new TransferHelper(this, family);
     }
     void createRenderLoop(uint graphicsQueueFamily) {
         throwIf(!physicalDevice.canPresent(window.surface, graphicsQueueFamily),

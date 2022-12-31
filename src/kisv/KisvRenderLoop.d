@@ -86,8 +86,8 @@ private:
         frame.perSecond = framePerSecond.as!float;
 
         /// Wait for the fence.
-        waitForFence(context, frame.fence);
-        resetFence(context, frame.fence);
+        waitForFence(context.device, frame.fence);
+        resetFence(context.device, frame.fence);
 
         /// Get the next available image view.
         uint index = window.acquireNext(frame.imageAvailable, null);

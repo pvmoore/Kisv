@@ -13,11 +13,11 @@ VkFence createFence(VkDevice device, bool signalled = false) {
     return fence;
 }
 
-bool waitForFence(KisvContext context, VkFence fence, ulong timeoutNanos = ulong.max) {
-    auto result = vkWaitForFences(context.device, 1, &fence, true, timeoutNanos);
+bool waitForFence(VkDevice device, VkFence fence, ulong timeoutNanos = ulong.max) {
+    auto result = vkWaitForFences(device, 1, &fence, true, timeoutNanos);
     return VK_SUCCESS == result;
 }
 
-void resetFence(KisvContext context, VkFence fence) {
-    vkResetFences(context.device, 1, &fence);
+void resetFence(VkDevice device, VkFence fence) {
+    vkResetFences(device, 1, &fence);
 }
