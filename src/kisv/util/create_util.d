@@ -50,13 +50,3 @@ VkSemaphore createSemaphore(VkDevice device) {
     return semaphore;
 }
 
-VkFence createFence(VkDevice device, bool signalled = false) {
-    VkFenceCreateInfo info = {
-        sType: VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-        flags: signalled ? VK_FENCE_CREATE_SIGNALED_BIT : 0
-    };
-
-    VkFence fence;
-    check(vkCreateFence(device, &info, null, &fence));
-    return fence;
-}

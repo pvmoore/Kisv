@@ -80,6 +80,11 @@ private:
         uint frameIndex = (frameNumber%frameResources.length).as!uint;
         KisvFrame frame = frameResources[frameIndex];
 
+        /// Set the transient properties
+        frame.number = frameNumber;
+        frame.seconds = frameSeconds.as!float;
+        frame.perSecond = framePerSecond.as!float;
+
         /// Wait for the fence.
         waitForFence(context, frame.fence);
         resetFence(context, frame.fence);

@@ -157,11 +157,11 @@ public:
         renderLoop.run(renderCallback);
     }
     void selectPhysicalDevice(int delegate(KisvPhysicalDevice[]) func) {
-        auto physicalDevices = new PhysicalDeviceHelper(this);
+        auto physicalDevices = KisvPhysicalDevice.enumerateAll(this);
 
-        int selected = func(physicalDevices.deviceInfos);
-        throwIf(selected >= physicalDevices.deviceInfos.length);
-        this.physicalDevice = physicalDevices.deviceInfos[selected];
+        int selected = func(physicalDevices);
+        throwIf(selected >= physicalDevices.length);
+        this.physicalDevice = physicalDevices[selected];
         log("\tSelected physical device '%s'", physicalDevice.name());
     }
     void selectQueueFamilies(void delegate(QueueHelper queues) func) {
@@ -226,6 +226,8 @@ public:
         transferCP = createCommandPool(device, family, VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
     }
     void createRenderLoop(uint graphicsQueueFamily) {
+        throwIf(!physicalDevice.canPresent(window.surface, graphicsQueueFamily),
+            "This surface cannot present on queue %s", graphicsQueueFamily);
         this.renderLoop = new KisvRenderLoop(this, graphicsQueueFamily);
     }
 }

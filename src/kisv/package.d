@@ -3,7 +3,7 @@ module kisv;
 public:
 
 /** See version.md for version history details */
-enum VERSION = "0.0.1";
+enum VERSION = "0.0.2";
 
 import std.typecons : Tuple, tuple;
 
@@ -18,7 +18,6 @@ import kisv.KisvWindow;
 import kisv.events.KisvEvents;
 
 import kisv.helper.FeatureHelper;
-import kisv.helper.PhysicalDeviceHelper;
 import kisv.helper.ShaderHelper;
 import kisv.helper.QueueHelper;
 

@@ -29,6 +29,15 @@ public:
 
     string name() { return properties.deviceName.fromStringz().as!string; }
 
+    bool canPresent(VkSurfaceKHR surface, uint queueFamilyIndex) {
+        uint canPresent;
+        vkGetPhysicalDeviceSurfaceSupportKHR(
+            handle,
+            queueFamilyIndex,
+            surface,
+            &canPresent);
+        return canPresent==VK_TRUE;
+    }
     VkSurfaceFormatKHR[] getFormats(VkSurfaceKHR surface) {
         VkSurfaceFormatKHR[] formats;
         VkFormat colorFormat;
@@ -60,6 +69,53 @@ public:
         vkGetPhysicalDeviceFormatProperties(handle, format, &props);
         return props;
     }
+    VkExtensionProperties[] getExtensions() {
+        VkExtensionProperties[] ext;
+        uint count;
+        vkEnumerateDeviceExtensionProperties(handle, null, &count, null);
+        ext.length = count;
+        vkEnumerateDeviceExtensionProperties(handle, null, &count, ext.ptr);
+        return ext;
+    }
+    VkPhysicalDeviceProperties getProperties() {
+        VkPhysicalDeviceProperties props;
+        vkGetPhysicalDeviceProperties(handle, &props);
+        return props;
+    }
+    VkQueueFamilyProperties[] getQueueFamilies() {
+        VkQueueFamilyProperties[] qf;
+        uint count;
+        vkGetPhysicalDeviceQueueFamilyProperties(handle, &count, null);
+        qf.length = count;
+        vkGetPhysicalDeviceQueueFamilyProperties(handle, &count, qf.ptr);
+        return qf;
+    }
+    VkPhysicalDeviceMemoryProperties getMemoryProperties() {
+        VkPhysicalDeviceMemoryProperties mp;
+        vkGetPhysicalDeviceMemoryProperties(handle, &mp);
+        return mp;
+    }
+    VkPhysicalDeviceRayTracingPipelinePropertiesKHR getRayTracingPipelineProperties() {
+        VkPhysicalDeviceRayTracingPipelinePropertiesKHR props = {
+            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR
+        };
+        getProperties2(&props);
+        return props;
+    }
+    VkPhysicalDeviceAccelerationStructurePropertiesKHR getAccelerationStructureProperties() {
+        VkPhysicalDeviceAccelerationStructurePropertiesKHR props = {
+            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR
+        };
+        getProperties2(&props);
+        return props;
+    }
+    void getProperties2(void* pNext) {
+        VkPhysicalDeviceProperties2 props2 = {
+            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
+            pNext: pNext
+        };
+        vkGetPhysicalDeviceProperties2(handle, &props2);
+    }
 
     override string toString() {
         return "PhysicalDevice{name:'%s', type:%s, apiVersion:%s, driverVersion:%s}".format(
@@ -68,5 +124,34 @@ public:
             VkVersion(properties.apiVersion),
             versionToString(properties.driverVersion)
         );
+    }
+
+//──────────────────────────────────────────────────────────────────────────────────────────────────
+
+    static KisvPhysicalDevice[] enumerateAll(KisvContext context) {
+        log("Enumerating physical devices");
+        uint count;
+	    check(vkEnumeratePhysicalDevices(context.instance, &count, null));
+        auto deviceHandles = new VkPhysicalDevice[count];
+        check(vkEnumeratePhysicalDevices(context.instance, &count, deviceHandles.ptr));
+
+        log("\tPhysical devices (found %s):", count);
+
+        auto devices = new KisvPhysicalDevice[count];
+
+        foreach(i, it; deviceHandles) {
+            auto device = new KisvPhysicalDevice();
+            devices[i] = device;
+            devices[i].handle = it;
+            devices[i].extensions = device.getExtensions();
+            devices[i].properties = device.getProperties();
+            devices[i].queueFamilies = device.getQueueFamilies();
+            devices[i].memoryProperties = device.getMemoryProperties();
+            devices[i].rtPipelineProperties = device.getRayTracingPipelineProperties();
+            devices[i].accelerationStructureProperties = device.getAccelerationStructureProperties();
+
+            log("\t[%s] %s", i, devices[i]);
+        }
+        return devices;
     }
 }

@@ -31,10 +31,10 @@ bool isUnset(T,E)(T value, E flag) if((is(T==enum) || isInteger!T) && (is(E==enu
     return (value & flag) == 0;
 }
 
-T maxOf(T)(T a, T b) if(isInteger!T) {
+T maxOf(T)(T a, T b) if(isInteger!T || isReal!T) {
     return a > b ? a : b;
 }
-T minOf(T)(T a, T b) if(isInteger!T) {
+T minOf(T)(T a, T b) if(isInteger!T || isReal!T) {
     return a < b ? a : b;
 }
 
@@ -46,12 +46,15 @@ template isObject(T) {
 }
 template isInteger(T) {
     const bool isInteger =
-        is(T==byte)  || is(T==ubyte) ||
+        is(T==byte)  || is(T==ubyte)  ||
         is(T==short) || is(T==ushort) ||
-        is(T==int)   || is(T==uint) ||
-        is(T==long)  || is(T==ulong) ||
+        is(T==int)   || is(T==uint)   ||
+        is(T==long)  || is(T==ulong)  ||
 
         is(T==const(int));
+}
+template isReal(T) {
+    const bool isReal = is(T==float) || is(T==double);
 }
 
 string[] getAllProperties(T)() if(isStruct!T || isObject!T) {

@@ -23,15 +23,12 @@ final class KisvFrame {
     /** Use this for adhoc commands per frame on the graphics queue */
     VkCommandBuffer commands;
 
-    /** The number of times <render> has been called. */
+    /** The number of times <render> has been called */
     ulong number;
-    /**
-     * Elapsed number of seconds
-     */
-    double seconds;
-    /**
-     * 1.0 / frames per second.
-     * Multiply by this to keep calculations relative to frame speed.
-     */
-    double perSecond;
+
+    /** Elapsed number of seconds */
+    float seconds;
+
+    /** 1.0 / frames per second. Multiply by this to keep calculations relative to frame speed */
+    float perSecond;
 }
