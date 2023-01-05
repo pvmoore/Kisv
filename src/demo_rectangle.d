@@ -139,10 +139,10 @@ private:
     // 3--2
     //
     Vertex[] vertices = [
-        Vertex(float2(-0.5, -0.5), float4(1,1,1,1), float2(0,0)),
-        Vertex(float2( 0.5, -0.5), float4(1,1,1,1), float2(1,0)),
-        Vertex(float2( 0.5,  0.5), float4(1,1,1,1), float2(1,1)),
-        Vertex(float2(-0.5,  0.5), float4(1,1,1,1), float2(0,1)),
+        Vertex(float2(-0.5, -0.5), float4(1,1,1,1), float2(0,0)), // [0]
+        Vertex(float2( 0.5, -0.5), float4(1,1,1,1), float2(1,0)), // [1]
+        Vertex(float2( 0.5,  0.5), float4(1,1,1,1), float2(1,1)), // [2]
+        Vertex(float2(-0.5,  0.5), float4(1,1,1,1), float2(0,1)), // [3]
     ];
 
     UBO ubo;
@@ -212,7 +212,7 @@ private:
         // Load the image data
         this.birdsImage = context.images.load("resources/images/birds.bmp");
 
-        // Create thye image
+        // Create the image
         VkImage image = context.images.createImage(IMG_BIRDS,
                                                    birdsImage.extent3D(),
                                                    birdsImage.format,
