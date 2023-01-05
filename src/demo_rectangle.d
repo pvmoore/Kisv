@@ -553,7 +553,7 @@ private:
         check(vkCreatePipelineLayout(context.device, &layoutInfo, null, &pipelineLayout));
 
         VkGraphicsPipelineCreateInfo pipelineCreateInfo = {
-            sType: VkStructureType.VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+            sType: VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
             flags: 0,
             stageCount: 2,
             pStages: [vertexStage, fragmentStage].ptr,
