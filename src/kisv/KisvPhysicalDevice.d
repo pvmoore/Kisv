@@ -26,8 +26,21 @@ public:
         }
         return found.length == requestedExtensions.length;
     }
+    bool supportsFormat(VkFormat format) {
+        auto fp = getFormatProperties(format);
+        return fp.linearTilingFeatures != 0 ||
+               fp.optimalTilingFeatures != 0 ||
+               fp.bufferFeatures != 0;
+    }
 
     string name() { return properties.deviceName.fromStringz().as!string; }
+
+    VkMemoryType[] getMemoryTypes() {
+        return memoryProperties.memoryTypes[0..memoryProperties.memoryTypeCount];
+    }
+    VkMemoryHeap[] getMemoryHeaps() {
+        return memoryProperties.memoryHeaps[0..memoryProperties.memoryHeapCount];
+    }
 
     bool canPresent(VkSurfaceKHR surface, uint queueFamilyIndex) {
         uint canPresent;

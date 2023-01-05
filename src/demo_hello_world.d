@@ -6,34 +6,6 @@ import kisv;
 import demo : DemoApplication;
 
 final class HelloWorld : DemoApplication {
-private:
-    VkClearValue bgColour;
-    KisvContext context;
-    uint graphicsQueueFamily;
-    uint transferQueueFamily;
-
-    KisvProperties props = {
-        appName: "HelloWorld",
-        apiVersion: VkVersion(1, 1, 0),
-        instanceLayers: [
-            "VK_LAYER_KHRONOS_validation"//,
-            //"VK_LAYER_LUNARG_api_dump"
-            //"VK_LAYER_LUNARG_monitor"
-        ],
-        instanceExtensions: [
-            "VK_KHR_surface",
-            "VK_KHR_win32_surface",
-            "VK_EXT_debug_report"
-        ],
-        deviceExtensions: [
-            "VK_KHR_swapchain",
-            "VK_KHR_maintenance1"
-        ],
-        windowed: true,
-        windowWidth: 1280,
-        windowHeight: 1024,
-        windowVsync: false
-    };
 public:
     override void initialise() {
 
@@ -70,6 +42,8 @@ public:
             log("Selected transfer queue family %s", transferQueueFamily);
         });
 
+        // TODO - move these to the ray tracing demo later
+/+
         // Select the device features that we want to use
         VkPhysicalDeviceAccelerationStructureFeaturesKHR asFeatures = {
             sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR
@@ -90,7 +64,7 @@ public:
         logStructure(asFeatures);
         logStructure(rtpFeatures);
         logStructure(bdaFeatures);
-
++/
         uint[uint] queueRequest;
         queueRequest[graphicsQueueFamily]++;
         if(transferQueueFamily != graphicsQueueFamily) {
@@ -109,8 +83,8 @@ public:
         initialiseScene();
 
         import core.cpuid: processor;
-        context.window.setTitle("Hello World %s :: %s, %s".format(
-            VERSION, context.physicalDevice.name(), processor()));
+        context.window.setTitle("%s %s :: %s, %s".format(
+            props.appName, VERSION, context.physicalDevice.name(), processor()));
     }
     override void destroy() {
         if(context) context.destroy();
@@ -123,6 +97,34 @@ public:
         });
     }
 private:
+    VkClearValue bgColour;
+    KisvContext context;
+    uint graphicsQueueFamily;
+    uint transferQueueFamily;
+
+    KisvProperties props = {
+        appName: "HelloWorld",
+        apiVersion: VkVersion(1, 1, 0),
+        instanceLayers: [
+            "VK_LAYER_KHRONOS_validation"//,
+            //"VK_LAYER_LUNARG_api_dump"
+            //"VK_LAYER_LUNARG_monitor"
+        ],
+        instanceExtensions: [
+            "VK_KHR_surface",
+            "VK_KHR_win32_surface",
+            "VK_EXT_debug_report"
+        ],
+        deviceExtensions: [
+            "VK_KHR_swapchain",
+            "VK_KHR_maintenance1"
+        ],
+        windowed: true,
+        windowWidth: 600,
+        windowHeight: 600,
+        windowVsync: false
+    };
+
     void renderScene(KisvFrame frame) {
         auto cmd = frame.commands;
         cmd.beginOneTimeSubmit();
@@ -142,7 +144,7 @@ private:
         cmd.end();
 
             /// Submit our render buffer
-        context.getQueue(graphicsQueueFamily, 0)
+        context.queues.getQueue(graphicsQueueFamily, 0)
                .submit(
             [cmd],                                           // VkCommandBuffers
             [frame.imageAvailable],                          // wait semaphores

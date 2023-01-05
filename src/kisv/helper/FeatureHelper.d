@@ -3,11 +3,6 @@ module kisv.helper.FeatureHelper;
 import kisv.all;
 
 final class FeatureHelper {
-private:
-    KisvContext context;
-    VkPhysicalDeviceFeatures2 features2;
-    FeatureStructure*[] features;
-    struct FeatureStructure { ulong sType; void* pNext; /** the rest of the structure here... */ }
 public:
     this(KisvContext context) {
         this.context = context;
@@ -30,4 +25,9 @@ public:
 
         return &features2;
     }
+private:
+    KisvContext context;
+    VkPhysicalDeviceFeatures2 features2;
+    FeatureStructure*[] features;
+    struct FeatureStructure { ulong sType; void* pNext; /** the rest of the structure here... */ }
 }

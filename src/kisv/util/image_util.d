@@ -2,12 +2,6 @@ module kisv.util.image_util;
 
 import kisv.all;
 
-VkImageView createImageView(VkDevice device, VkImageViewCreateInfo info) {
-    VkImageView view;
-    check(vkCreateImageView(device, &info, null, &view));
-    return view;
-}
-
 VkFramebuffer createFrameBuffer(VkDevice device,
                                 VkRenderPass renderPass,
                                 VkImageView[] views,

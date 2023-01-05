@@ -44,21 +44,6 @@ void beginRenderPass(VkCommandBuffer buffer,
         clearValueCount: clearValues.length.as!int,
         pClearValues: clearValues.ptr
     };
-
-    // union VkClearValue {
-    //     VkClearColorValue           color;
-    //     VkClearDepthStencilValue    depthStencil;
-    // }
-    //union VkClearColorValue {
-    //    float       float32[4];
-    //    int32_t     int32[4];
-    //    uint32_t    uint32[4];
-    //}
-    //struct VkClearDepthStencilValue {
-    //    float       depth;
-    //    uint32_t    stencil;
-    //}
-
     vkCmdBeginRenderPass(buffer, &info, contents);
 }
 void endRenderPass(VkCommandBuffer buffer) {

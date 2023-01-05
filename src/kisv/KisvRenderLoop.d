@@ -3,13 +3,6 @@ module kisv.KisvRenderLoop;
 import kisv.all;
 
 final class KisvRenderLoop {
-private:
-    KisvContext context;
-    uint graphicsQueueFamily;
-    KisvWindow window;
-    KisvFrame[] frameResources;
-    VkCommandPool graphicsCP;
-    void delegate(KisvFrame) renderCallback;
 public:
     this(KisvContext context, uint graphicsQueueFamily) {
         log("Creating render loop");
@@ -34,8 +27,11 @@ public:
         log("║ Render loop started                                             ║");
         log("╚═════════════════════════════════════════════════════════════════╝");
 
-        StopWatch watch;
+        ulong lastFrameTotalNanos;
+        ulong frameTimeNanos;
         ulong elapsedSecond;
+        StopWatch watch;
+
         watch.start();
 
         while(!glfwWindowShouldClose(window.glfwWindow)) {
@@ -68,38 +64,40 @@ public:
         log("╚═════════════════════════════════════════════════════════════════╝");
     }
 private:
+    KisvContext context;
+    uint graphicsQueueFamily;
+    KisvWindow window;
+    KisvFrame[] frameResources;
+    VkCommandPool graphicsCP;
+    void delegate(KisvFrame) renderCallback;
     double framePerSecond = 1;
     double frameSeconds = 0;
     ulong frameNumber;
-
-    uint frameBufferIndex;
-    ulong lastFrameTotalNanos;
-    ulong frameTimeNanos;
 
     void renderFrame() {
         uint frameIndex = (frameNumber%frameResources.length).as!uint;
         KisvFrame frame = frameResources[frameIndex];
 
-        /// Set the transient properties
+        // Set the transient frame properties
         frame.number = frameNumber;
         frame.seconds = frameSeconds.as!float;
         frame.perSecond = framePerSecond.as!float;
 
-        /// Wait for the fence.
+        // Wait for the fence
         waitForFence(context.device, frame.fence);
         resetFence(context.device, frame.fence);
 
-        /// Get the next available image view.
+        // Get the next available image view.
         uint index = window.acquireNext(frame.imageAvailable, null);
 
-        /// Let the app do its thing.
+        // Let the app do its thing
         renderCallback(frame);
 
-        /// Present
+        // Present
         window.queuePresent(
-            context.getQueue(graphicsQueueFamily, 0),
-            index,
-            [frame.renderFinished] // wait semaphores
+            context.queues.getQueue(graphicsQueueFamily, 0),
+            index,                  // image index
+            [frame.renderFinished]  // wait semaphores
         );
     }
     void createCommandPool() {

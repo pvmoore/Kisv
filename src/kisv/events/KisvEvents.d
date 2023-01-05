@@ -3,14 +3,13 @@ module kisv.events.KisvEvents;
 import kisv.all;
 
 final class KisvEvents {
-private:
-
 public:
     this() {
 
     }
+private:
 }
-
+//──────────────────────────────────────────────────────────────────────────────────────────────────
 enum EventT {
     KEY_UP,
     KEY_DOWN,

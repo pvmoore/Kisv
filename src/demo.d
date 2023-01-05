@@ -1,16 +1,18 @@
 module demo;
 
-import core.sys.windows.windows;
+import core.sys.windows.windows :
+    HINSTANCE, LPSTR, MessageBoxA, CommandLineToArgvW, GetCommandLineW,
+    MB_OK, MB_ICONEXCLAMATION;
+
 import core.runtime;
 import std.string   : toStringz, fromStringz;
 import std.utf      : toUTF8;
 
 import demo_hello_world;
 import demo_ray_tracing;
-import demo_triangle;
+import demo_rectangle;
 
 pragma(lib, "user32.lib");
-//pragma(lib, "libucrt.lib");
 
 //extern(C) __gshared string[] rt_options = [
 //    "gcopt=profile:1"
@@ -36,8 +38,8 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int i
                 case "raytracing":
                     app = new RayTracing();
                     break;
-                case "triangle":
-                    app = new Triangle();
+                case "rectangle":
+                    app = new Rectangle();
                     break;
                 case "helloworld":
                 default:
@@ -74,7 +76,7 @@ string[] getArgs() {
     if(ptr !is null && nArgs>0) {
         foreach(i; 0..nArgs) {
             auto arg = fromStringz!wchar(*ptr);
-            arguments ~= arg.toUTF8;
+            arguments ~= arg.toUTF8();
             ptr++;
         }
     }

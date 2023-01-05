@@ -12,3 +12,17 @@
 ## 0.0.3 Add TransferHelper
 
 - Add new **TransferHelper** class to handle uploads from staging buffer to device buffer
+
+## 0.0.4
+
+- Change demo_triangle to demo_rectangle and implement it
+- Add float2, float4 and float16
+- Add rectangle shader source files
+- Add birds.bmp image
+- Add BMP utility to load BMP files
+- Implement **ShaderHelper** to compile and load shader files (requires glslangValidator.exe)
+- Implement **MemoryHelper** to help to select and allocate Vulkan memory
+- Implement **BufferHelper** to manage created buffers and buffer views
+- Implement **ImageHelper** to manage created images and image views
+- Implement **MemoryHelper** to manage memory allocations and binding
+- Add/modify various *_util files

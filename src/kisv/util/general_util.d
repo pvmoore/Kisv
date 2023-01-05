@@ -1,4 +1,4 @@
-module kisv.util.util;
+module kisv.util.general_util;
 
 import kisv.all;
 import std.traits : isSomeFunction;
@@ -74,4 +74,36 @@ string repeat(string s, long count) {
         app ~= s;
     }
     return app.data.join();
+}
+
+/*
+ *  auto b = enumToString!VkFormatFeatureFlagBits(bits);
+ */
+string enumToString(E)(uint bits,) if (is(E == enum)) {
+    import std.traits : EnumMembers;
+    import std.format : format;
+     import core.bitop : popcnt;
+
+    string buf = "[";
+    foreach(i, e; EnumMembers!E) {
+
+        if(bits & e) {
+            // Skip enum members that have more than one bit set
+            if(popcnt(e) > 1) continue;
+
+            string s = "%s".format(e);
+            buf ~= (buf.length==1 ? "" : ", ") ~ s;
+        }
+    }
+    return buf ~ "]";
+}
+
+string mbToString(ulong size) {
+    enum MB = 1024.0*1024;
+    return "%.2f MB".format(size / MB);
+}
+
+ulong alignedTo(ulong value, ulong alignment) {
+    ulong mask = alignment-1;
+    return (value + mask) & ~mask;
 }

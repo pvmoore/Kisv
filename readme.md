@@ -17,10 +17,22 @@ The required glfw dll is provided in the root folder of this repository _glfw3.3
 (Windows 64 bit version). This should also be automatically found if you run the demos from the
 project root.
 
+glslangValidator.exe (from the Vulkan SDK) is required for compiling shader files.
+
 ## Demos
 
 - **Hello world** :: Sets up Vulkan, creates a Window and runs a minimal render loop
   until the window is closed
+- **Rectangle** :: Displays a textured rectangle. Demonstrates how to:
+  - Select and allocate memory
+  - Create and bind buffers and images to memory
+  - Upload data from the host to the GPU via a staging buffer
+  - Create an image sampler
+  - Create fragment and vertex shaders
+  - Setup descriptor bindings for shaders
+  - Create and use a graphics pipeline
+
+![0.0.4](/screenshots/0.0.4.png)
 
 ## Version History
 

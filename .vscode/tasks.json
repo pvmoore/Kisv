@@ -16,7 +16,7 @@
             "label": "**** Hello World -- Keep It Simple Vulkan ****",
             "type": "shell",
             "windows": {
-                "command": "run_debug_build.bat test helloWorld",
+                "command": "./build_and_run.bat test helloWorld",
             },
             "group": "build",
             "presentation": {
@@ -26,10 +26,10 @@
             "problemMatcher": []
         },
         {
-            "label": "**** Triangle -- Keep It Simple Vulkan ****",
+            "label": "**** Rectangle -- Keep It Simple Vulkan ****",
             "type": "shell",
             "windows": {
-                "command": "run_debug_build.bat test triangle",
+                "command": "./build_and_run.bat test rectangle",
             },
             "group": "build",
             "presentation": {
@@ -42,7 +42,7 @@
             "label": "**** Ray Tracing -- Keep It Simple Vulkan ****",
             "type": "shell",
             "windows": {
-                "command": "run_debug_build.bat test raytracing",
+                "command": "./build_and_run.bat test raytracing",
             },
             "group": "build",
             "presentation": {

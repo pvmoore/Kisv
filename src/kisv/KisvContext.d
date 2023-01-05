@@ -3,32 +3,28 @@ module kisv.KisvContext;
 import kisv.all;
 
 final class KisvContext {
-private:
-    VkDebugReportCallbackEXT debugCallback;
-    void* features2;
-    VkQueue[][uint] queuesMap;
-    ShaderHelper shaders;
-    KisvRenderLoop renderLoop;
-    TransferHelper transferHelper;
 public:
     KisvProperties props;
     VkInstance instance;
     VkDevice device;
     VkRenderPass renderPass;
 
+    MemoryHelper memory;
+    BufferHelper buffers;
+    ImageHelper images;
+    TransferHelper transfer;
+    ShaderHelper shaders;
+    QueueHelper queues;
+
     KisvPhysicalDevice physicalDevice;
     KisvWindow window;
 
-    VkQueue getQueue(uint family, uint index) {
-        auto list = family in queuesMap;
-        throwIf(!list, "Queue family %s is not in the list", family);
-        throwIf(index >= list.length, "Queue index %s >= %s", index, list.length);
-        return (*list)[index];
-    }
-
     this(KisvProperties props) {
         this.props = props;
-        this.shaders = new ShaderHelper();
+        this.shaders = new ShaderHelper(this);
+        this.buffers = new BufferHelper(this);
+        this.images = new ImageHelper(this);
+        this.queues = new QueueHelper(this);
 
         // Keep it simple. Drop support for Vulkan 1.0
         throwIf(!props.apiVersion.isEqualOrGreaterThan(VkVersion(1,1,0)), "The minimum supported Vulkan version is 1.1");
@@ -139,12 +135,20 @@ public:
             vkDeviceWaitIdle(device);
 
             if(renderLoop) renderLoop.destroy();
-            if(transferHelper) transferHelper.destroy();
+            if(transfer) transfer.destroy();
             if(window) window.destroy();
             if(renderPass) vkDestroyRenderPass(device, renderPass, null);
+            if(shaders) shaders.destroy();
+            if(buffers) buffers.destroy();
+            if(images) images.destroy();
+            if(memory) memory.destroy();
+            if(queues) queues.destroy();
+
+            log("\tDestroying device");
             vkDestroyDevice(device, null);
         }
         if(instance) {
+            log("\tDestroying instance");
             if(debugCallback) vkDestroyDebugReportCallbackEXT(instance, debugCallback, null);
             vkDestroyInstance(instance, null);
         }
@@ -163,10 +167,12 @@ public:
         throwIf(selected >= physicalDevices.length);
         this.physicalDevice = physicalDevices[selected];
         log("\tSelected physical device '%s'", physicalDevice.name());
+
+        this.memory = new MemoryHelper(this);
     }
     void selectQueueFamilies(void delegate(QueueHelper queues) func) {
-        auto helper = new QueueHelper(this);
-        func(helper);
+        queues.initialise();
+        func(queues);
     }
     void selectDeviceFeatures(void delegate(FeatureHelper) func) {
         auto helper = new FeatureHelper(this);
@@ -207,17 +213,7 @@ public:
         check(vkCreateDevice(physicalDevice.handle, &createInfo, null, &device));
 
         // Fetch the queues
-        foreach(entry; queuesPerFamily.byKeyValue()) {
-            uint family = entry.key();
-            uint numQueues = entry.value();
-
-            VkQueue[] queueList = new VkQueue[numQueues];
-
-            foreach(i; 0..numQueues) {
-                vkGetDeviceQueue(device, family, i.as!int, &queueList[i]);
-            }
-            queuesMap[family] = queueList;
-        }
+        queues.deviceCreated(device, queuesPerFamily);
     }
     void createWindow(VkImageUsageFlagBits usage = 0.as!VkImageUsageFlagBits) {
         this.window = new KisvWindow(this);
@@ -228,11 +224,15 @@ public:
         window.createFrameBuffers(renderPass);
     }
     void createTransferHelper(uint family) {
-        this.transferHelper = new TransferHelper(this, family);
+        this.transfer = new TransferHelper(this, family);
     }
     void createRenderLoop(uint graphicsQueueFamily) {
         throwIf(!physicalDevice.canPresent(window.surface, graphicsQueueFamily),
             "This surface cannot present on queue %s", graphicsQueueFamily);
         this.renderLoop = new KisvRenderLoop(this, graphicsQueueFamily);
     }
+private:
+    VkDebugReportCallbackEXT debugCallback;
+    void* features2;
+    KisvRenderLoop renderLoop;
 }

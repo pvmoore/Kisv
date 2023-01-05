@@ -33,24 +33,25 @@ public:
         this.context = context;
     }
     void destroy() {
-        log("\tDestroying %s frame buffers", frameBuffers.length);
+        log("\tDestroying KisvWindow");
+        log("\t\tDestroying %s swapchain frame buffers", frameBuffers.length);
         foreach(f; frameBuffers) {
             vkDestroyFramebuffer(context.device, f, null);
         }
-        log("\tDestroying %s image views", views.length);
+        log("\t\tDestroying %s swapchain image views", views.length);
         foreach(v; views) {
             vkDestroyImageView(context.device, v, null);
         }
-        log("\tDestroying swapchain");
+        log("\t\tDestroying swapchain");
         if(swapchain) vkDestroySwapchainKHR(context.device, swapchain, null);
-        log("\tDestroying surface");
+        log("\t\tDestroying surface");
         if(surface) vkDestroySurfaceKHR(context.instance, surface, null);
-        log("\tDestroying window");
+        log("\t\tDestroying GLFW window");
         if(glfwWindow) glfwDestroyWindow(glfwWindow);
     }
     void create(VkImageUsageFlagBits usage) {
         this.swapchainUsage = usage;
-        log("Creating window");
+
         createWindow();
         createSurface();
         createSwapchain();
@@ -142,6 +143,7 @@ public:
 //──────────────────────────────────────────────────────────────────────────────────────────────────
 private:
     void createWindow() {
+        log("\tCreating GLFW window");
         GLFWmonitor* monitor = glfwGetPrimaryMonitor();
         auto vidmode = glfwGetVideoMode(monitor);
         if(context.props.windowed) {
@@ -351,8 +353,8 @@ private:
         log("\tCreating image views");
         views.length = images.length;
         foreach(i; 0..images.length) {
-            views[i] = createImageView(context.device, imageViewCreateInfo(images[i], colorFormat, VK_IMAGE_VIEW_TYPE_2D));
+            VkImageViewCreateInfo createInfo = imageViewCreateInfo(images[i], colorFormat, VK_IMAGE_VIEW_TYPE_2D);
+            check(vkCreateImageView(context.device, &createInfo, null, &views[i]));
         }
-        log("\tImage views created");
     }
 }
