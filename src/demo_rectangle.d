@@ -465,11 +465,7 @@ private:
             sType: VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
             flags:0,
             viewportCount: 1,
-            // pViewports: [VkViewport(0, context.window.height,
-            //                         context.window.width, -context.window.height,
-            //                         0.0f, 1.0f)].ptr,
-            pViewports: [VkViewport(0, 0,
-                                    context.window.width, context.window.height,
+            pViewports: [VkViewport(0, 0, context.window.width, context.window.height,
                                     0.0f, 1.0f)].ptr,
             scissorCount: 1,
             pScissors: [VkRect2D(VkOffset2D(0,0), context.window.size())].ptr
