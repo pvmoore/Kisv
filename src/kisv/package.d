@@ -3,7 +3,7 @@ module kisv;
 public:
 
 /** See version.md for version history details */
-enum VERSION = "0.0.4";
+enum VERSION = "0.0.5";
 
 
 import std.typecons : Tuple, tuple;

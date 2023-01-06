@@ -26,3 +26,6 @@
 - Implement **ImageHelper** to manage created images and image views
 - Implement **MemoryHelper** to manage memory allocations and binding
 - Add/modify various *_util files
+
+## 0.0.5
+
