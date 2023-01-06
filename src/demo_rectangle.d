@@ -139,10 +139,10 @@ private:
     // 3--2
     //
     Vertex[] vertices = [
-        Vertex(float2(-0.5, -0.5), float4(1,1,1,1), float2(0,0)),
-        Vertex(float2( 0.5, -0.5), float4(1,1,1,1), float2(1,0)),
-        Vertex(float2( 0.5,  0.5), float4(1,1,1,1), float2(1,1)),
-        Vertex(float2(-0.5,  0.5), float4(1,1,1,1), float2(0,1)),
+        Vertex(float2(-0.5, -0.5), float4(1,1,1,1), float2(0,0)), // [0]
+        Vertex(float2( 0.5, -0.5), float4(1,1,1,1), float2(1,0)), // [1]
+        Vertex(float2( 0.5,  0.5), float4(1,1,1,1), float2(1,1)), // [2]
+        Vertex(float2(-0.5,  0.5), float4(1,1,1,1), float2(0,1)), // [3]
     ];
 
     UBO ubo;
@@ -212,7 +212,7 @@ private:
         // Load the image data
         this.birdsImage = context.images.load("resources/images/birds.bmp");
 
-        // Create thye image
+        // Create the image
         VkImage image = context.images.createImage(IMG_BIRDS,
                                                    birdsImage.extent3D(),
                                                    birdsImage.format,
@@ -465,11 +465,7 @@ private:
             sType: VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
             flags:0,
             viewportCount: 1,
-            // pViewports: [VkViewport(0, context.window.height,
-            //                         context.window.width, -context.window.height,
-            //                         0.0f, 1.0f)].ptr,
-            pViewports: [VkViewport(0, 0,
-                                    context.window.width, context.window.height,
+            pViewports: [VkViewport(0, 0, context.window.width, context.window.height,
                                     0.0f, 1.0f)].ptr,
             scissorCount: 1,
             pScissors: [VkRect2D(VkOffset2D(0,0), context.window.size())].ptr
@@ -557,7 +553,7 @@ private:
         check(vkCreatePipelineLayout(context.device, &layoutInfo, null, &pipelineLayout));
 
         VkGraphicsPipelineCreateInfo pipelineCreateInfo = {
-            sType: VkStructureType.VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+            sType: VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
             flags: 0,
             stageCount: 2,
             pStages: [vertexStage, fragmentStage].ptr,

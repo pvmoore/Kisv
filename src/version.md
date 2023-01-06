@@ -21,11 +21,11 @@
 - Add birds.bmp image
 - Add BMP utility to load BMP files
 - Implement **ShaderHelper** to compile and load shader files (requires glslangValidator.exe)
-- Implement **MemoryHelper** to help to select and allocate Vulkan memory
+- Implement **MemoryHelper** to help to select, allocate and manage Vulkan memory
 - Implement **BufferHelper** to manage created buffers and buffer views
 - Implement **ImageHelper** to manage created images and image views
-- Implement **MemoryHelper** to manage memory allocations and binding
 - Add/modify various *_util files
 
 ## 0.0.5
+
 
