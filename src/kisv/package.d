@@ -10,6 +10,7 @@ import std.typecons : Tuple, tuple;
 
 import kisv.KisvContext;
 import kisv.KisvFrame;
+import kisv.KisvGraphicsPipeline;
 import kisv.KisvPhysicalDevice;
 import kisv.KisvProperties;
 import kisv.KisvRenderLoop;
@@ -23,6 +24,7 @@ import kisv.helper.FeatureHelper;
 import kisv.helper.ImageHelper;
 import kisv.helper.MemoryHelper;
 import kisv.helper.QueueHelper;
+import kisv.helper.SamplerHelper;
 import kisv.helper.ShaderHelper;
 import kisv.helper.TransferHelper;
 
@@ -32,6 +34,7 @@ import kisv.maths.float16;
 
 import kisv.misc.bmp;
 import kisv.misc.glfw_api;
+import kisv.misc.keys;
 import kisv.misc.VkVersion;
 import kisv.misc.vulkan_api;
 

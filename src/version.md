@@ -28,4 +28,6 @@
 
 ## 0.0.5
 
-
+- Implement **SamplerHelper** to manage samplers
+- Implement **DescriptorHelper** to manage descriptors and layouts
+- Refactor the demo_rectangle to use the above new classes

@@ -15,6 +15,8 @@ public:
     TransferHelper transfer;
     ShaderHelper shaders;
     QueueHelper queues;
+    SamplerHelper samplers;
+    DescriptorHelper descriptors;
 
     KisvPhysicalDevice physicalDevice;
     KisvWindow window;
@@ -25,6 +27,8 @@ public:
         this.buffers = new BufferHelper(this);
         this.images = new ImageHelper(this);
         this.queues = new QueueHelper(this);
+        this.samplers = new SamplerHelper(this);
+        this.descriptors = new DescriptorHelper(this);
 
         // Keep it simple. Drop support for Vulkan 1.0
         throwIf(!props.apiVersion.isEqualOrGreaterThan(VkVersion(1,1,0)), "The minimum supported Vulkan version is 1.1");
@@ -143,6 +147,8 @@ public:
             if(images) images.destroy();
             if(memory) memory.destroy();
             if(queues) queues.destroy();
+            if(samplers) samplers.destroy();
+            if(descriptors) descriptors.destroy();
 
             log("\tDestroying device");
             vkDestroyDevice(device, null);

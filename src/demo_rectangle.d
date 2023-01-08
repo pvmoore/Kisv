@@ -67,15 +67,8 @@ public:
         // Always ensure the device is idle before destroying device objects
         vkDeviceWaitIdle(context.device);
 
-        // TODO - handle in DescriptorHelper
-        if(dsLayout) vkDestroyDescriptorSetLayout(context.device, dsLayout, null);
-        if(descriptorPool) vkDestroyDescriptorPool(context.device, descriptorPool, null);
-
-        // TODO - create PipelineHelper and handle there?
         if(pipeline) vkDestroyPipeline(context.device, pipeline, null);
         if(pipelineLayout) vkDestroyPipelineLayout(context.device, pipelineLayout, null);
-
-        if(sampler) vkDestroySampler(context.device, sampler, null);
 
         if(context) context.destroy();
     }
@@ -97,6 +90,9 @@ private:
         BUF_UNIFORM         = "uniform",
         IMG_BIRDS           = "birds"
     }
+    enum DS_LAYOUT = LayoutKey("layout1");
+    enum DS_POOL = PoolKey("pool1");
+
     KisvProperties props = {
         appName: "Textured Rectangle",
         apiVersion: VkVersion(1, 1, 0),
@@ -185,26 +181,9 @@ private:
         context.memory.allocateDeviceMemory(MEM_GPU, 8 * 1024*1024);
     }
     void createSampler() {
-        VkSamplerCreateInfo createInfo = {
-            sType: VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-            flags: 0,
-            magFilter: VK_FILTER_LINEAR,
-            minFilter: VK_FILTER_LINEAR,
-            mipmapMode: VK_SAMPLER_MIPMAP_MODE_LINEAR,
-            addressModeU: VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-            addressModeV: VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-            addressModeW: VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-            compareEnable: VK_FALSE,
-            compareOp: VK_COMPARE_OP_ALWAYS,
-            mipLodBias: 0,
-            minLod: 0,
-            maxLod: 0,
-            borderColor: VK_BORDER_COLOR_INT_OPAQUE_BLACK,
-            anisotropyEnable: VK_FALSE,
-            maxAnisotropy: 1,
-            unnormalizedCoordinates: VK_FALSE
-        };
-        check(vkCreateSampler(context.device, &createInfo, null, &sampler));
+        this.sampler = context.samplers.createLinear("sampler0", (ref VkSamplerCreateInfo info) {
+            // Use the standard linear sampler properties
+        });
     }
     void createAndUploadSamplerTexture() {
         log("Creating sampler texture");
@@ -311,51 +290,31 @@ private:
         };
 
         /** Create the layout with the bindings*/
-        VkDescriptorSetLayoutCreateInfo layoutCreateInfo = {
-            sType: VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-            flags:0,
-            bindingCount: 2,
-            pBindings: [uniformBufferBinding, imageSamplerBinding].ptr
-        };
-
-        check(vkCreateDescriptorSetLayout(context.device, &layoutCreateInfo, null, &dsLayout));
+        this.dsLayout = context.descriptors.createLayout(DS_LAYOUT, [uniformBufferBinding, imageSamplerBinding]);
 
         /** Create the descriptor pool */
         VkDescriptorPoolSize uniformPoolSize = {
             type: VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
             descriptorCount: 1
         };
-        VkDescriptorPoolSize samplerPoolSize = {
+        VkDescriptorPoolSize imagePoolSize = {
             type: VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
             descriptorCount: 1
         };
 
-        VkDescriptorPoolCreateInfo poolCreateInfo = {
-            sType: VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-            flags:0,
-            maxSets: 1,
-            poolSizeCount: 2,
-            pPoolSizes: [uniformPoolSize, samplerPoolSize].ptr
-        };
-        check(vkCreateDescriptorPool(context.device, &poolCreateInfo, null, &descriptorPool));
+        // We will only need 1 set
+        uint maxSets = 1;
+        this.descriptorPool = context.descriptors.createPool(DS_POOL, maxSets,  [uniformPoolSize, imagePoolSize]);
 
-        /** Allocate a descriptor set */
-        VkDescriptorSetAllocateInfo allocDescriptorSetInfo = {
-            sType: VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-            descriptorPool: descriptorPool,
-            descriptorSetCount: 1,
-            pSetLayouts: &dsLayout
-        };
-        VkDescriptorSet[] sets = new VkDescriptorSet[1];
-        check(vkAllocateDescriptorSets(context.device, &allocDescriptorSetInfo, sets.ptr));
-        this.descriptorSet = sets[0];
+        /** Allocate our single descriptor set */
+        this.descriptorSet = context.descriptors.allocateSet(DS_POOL, DS_LAYOUT);
 
         /** Write the data to the descriptor set */
-
         // Create an image view
         VkImageView imageView = context.images.getOrCreateView(IMG_BIRDS,
                                                                VK_IMAGE_VIEW_TYPE_2D,
                                                                birdsImage.format);
+
 
         VkDescriptorBufferInfo bufferInfo = {
             buffer: uniformBuffer,
