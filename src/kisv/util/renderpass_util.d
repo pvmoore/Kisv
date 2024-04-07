@@ -66,7 +66,7 @@ VkSubpassDependency[] subpassDependencies() {
         srcAccessMask: VK_ACCESS_MEMORY_READ_BIT,
         dstStageMask: VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
         dstAccessMask: VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-        dependencyFlags: VkDependencyFlagBits.VK_DEPENDENCY_BY_REGION_BIT
+        dependencyFlags: VK_DEPENDENCY_BY_REGION_BIT
     };
     VkSubpassDependency d2 = {
         srcSubpass: 0,
@@ -75,7 +75,7 @@ VkSubpassDependency[] subpassDependencies() {
         srcAccessMask: VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
         dstStageMask: VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
         dstAccessMask: VK_ACCESS_MEMORY_READ_BIT,
-        dependencyFlags: VkDependencyFlagBits.VK_DEPENDENCY_BY_REGION_BIT
+        dependencyFlags: VK_DEPENDENCY_BY_REGION_BIT
     };
     return [d1, d2];
 }

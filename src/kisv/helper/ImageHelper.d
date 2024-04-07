@@ -57,10 +57,15 @@ public:
         throwIf(!image, "Image key not found '%s'", imageKey);
         return image;
     }
-    VkImage createImage(string imageKey, VkExtent3D extent, VkFormat format, VkImageUsageFlagBits usage) {
+    VkImage createImage(string imageKey,
+                        VkExtent3D extent,
+                        VkFormat format,
+                        VkImageUsageFlagBits usage,
+                        void delegate(ref VkImageCreateInfo) modifier = null)
+    {
         throwIf((imageKey in images) !is null, "Image key already created '%s'", imageKey);
         log("Creating image '%s' %s %s %s", imageKey, extent, format, enumToString!VkImageUsageFlagBits(usage));
-        VkImage image = createImage(extent, format, usage);
+        VkImage image = createImage(extent, format, usage, modifier);
         images[imageKey] = image;
         return image;
     }
@@ -82,7 +87,11 @@ public:
     VkImage[string] images;              // images by image key
     VkImageView[ulong][string] views;    // views created per image key
 
-    VkImage createImage(VkExtent3D extent, VkFormat format, VkImageUsageFlagBits usage) {
+    VkImage createImage(VkExtent3D extent,
+                        VkFormat format,
+                        VkImageUsageFlagBits usage,
+                        void delegate(ref VkImageCreateInfo) modifier)
+    {
         VkImageType type = extent.depth != 1 ? VK_IMAGE_TYPE_3D :
                            extent.height != 1 ? VK_IMAGE_TYPE_2D :
                            VK_IMAGE_TYPE_1D;
@@ -101,6 +110,7 @@ public:
             sharingMode: VK_SHARING_MODE_EXCLUSIVE,
             initialLayout: VK_IMAGE_LAYOUT_UNDEFINED
         };
+        if(modifier) modifier(imageCreateInfo);
         VkImage image;
         check(vkCreateImage(context.device, &imageCreateInfo, null, &image));
         return image;

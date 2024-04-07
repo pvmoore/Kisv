@@ -3,7 +3,7 @@ module kisv;
 public:
 
 /** See version.md for version history details */
-enum VERSION = "0.0.5";
+enum VERSION = "0.0.6";
 
 
 import std.typecons : Tuple, tuple;
@@ -34,7 +34,6 @@ import kisv.maths.float16;
 
 import kisv.misc.bmp;
 import kisv.misc.glfw_api;
-import kisv.misc.keys;
 import kisv.misc.VkVersion;
 import kisv.misc.vulkan_api;
 
@@ -48,5 +47,6 @@ import kisv.util.log_util;
 import kisv.util.memory_util;
 import kisv.util.queue_util;
 import kisv.util.renderpass_util;
+import kisv.util.rt_util;
 import kisv.util.semaphore_util;
 import kisv.util.vulkan_util;

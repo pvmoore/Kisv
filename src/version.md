@@ -31,3 +31,7 @@
 - Implement **SamplerHelper** to manage samplers
 - Implement **DescriptorHelper** to manage descriptors and layouts
 - Refactor the demo_rectangle to use the above new classes
+
+## 0.0.6
+
+- Implement demo_ray_tracing (Not currently working)

@@ -42,29 +42,6 @@ public:
             log("Selected transfer queue family %s", transferQueueFamily);
         });
 
-        // TODO - move these to the ray tracing demo later
-/+
-        // Select the device features that we want to use
-        VkPhysicalDeviceAccelerationStructureFeaturesKHR asFeatures = {
-            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR
-        };
-        VkPhysicalDeviceRayTracingPipelineFeaturesKHR rtpFeatures = {
-            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR
-        };
-        VkPhysicalDeviceBufferDeviceAddressFeaturesEXT bdaFeatures = {
-            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES
-        };
-
-        context.selectDeviceFeatures((FeatureHelper f) {
-            f.addFeature(&asFeatures)
-             .addFeature(&rtpFeatures)
-             .addFeature(&bdaFeatures);
-        });
-
-        logStructure(asFeatures);
-        logStructure(rtpFeatures);
-        logStructure(bdaFeatures);
-+/
         uint[uint] queueRequest;
         queueRequest[graphicsQueueFamily]++;
         if(transferQueueFamily != graphicsQueueFamily) {

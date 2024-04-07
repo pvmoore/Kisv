@@ -88,10 +88,10 @@ private:
         BUF_VERTEX          = "vertex",
         BUF_INDEX           = "index",
         BUF_UNIFORM         = "uniform",
-        IMG_BIRDS           = "birds"
+        IMG_BIRDS           = "birds",
+        DS_LAYOUT           = "layout1",
+        DS_POOL             = "pool1"
     }
-    enum DS_LAYOUT = LayoutKey("layout1");
-    enum DS_POOL = PoolKey("pool1");
 
     KisvProperties props = {
         appName: "Textured Rectangle",
@@ -361,7 +361,7 @@ private:
             sType: VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
             flags: 0,
             stage: VK_SHADER_STAGE_VERTEX_BIT,
-            module_: context.shaders.get("rectangle.vert"),
+            module_: context.shaders.get("rectangle/rectangle.vert"),
             pName: "main".ptr,
             pSpecializationInfo: null
         };
@@ -369,7 +369,7 @@ private:
             sType: VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
             flags: 0,
             stage: VK_SHADER_STAGE_FRAGMENT_BIT,
-            module_: context.shaders.get("rectangle.frag"),
+            module_: context.shaders.get("rectangle/rectangle.frag"),
             pName: "main".ptr,
             pSpecializationInfo: null
         };

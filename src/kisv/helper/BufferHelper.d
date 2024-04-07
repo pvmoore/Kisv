@@ -25,7 +25,7 @@ public:
     }
     VkBuffer createBuffer(string bufferKey, ulong size, VkBufferUsageFlagBits usage, uint[] queueFamilies = null) {
         throwIf((bufferKey in buffers) !is null, "Buffer key already created '%s'", bufferKey);
-        log("Creating buffer '%s' %s %s", bufferKey, size, enumToString!VkImageUsageFlagBits(usage));
+        log("Creating buffer '%s' %s %s", bufferKey, size, enumToString!VkBufferUsageFlagBits(usage));
         VkBuffer buffer = createBuffer(size, usage, queueFamilies);
         buffers[bufferKey] = buffer;
         return buffer;

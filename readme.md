@@ -23,7 +23,7 @@ glslangValidator.exe (from the Vulkan SDK) is required for compiling shader file
 
 - **Hello world** :: Sets up Vulkan, creates a Window and runs a minimal render loop
   until the window is closed
-- **Rectangle** :: Displays a textured rectangle. Demonstrates how to:
+- **Textured Rectangle** :: Displays a textured rectangle. Demonstrates how to:
   - Select and allocate memory
   - Create and bind buffers and images to memory
   - Upload data from the host to the GPU via a staging buffer

@@ -43,6 +43,11 @@
             "type": "shell",
             "windows": {
                 "command": "./build_and_run.bat test raytracing",
+                "options": {
+                    "env": {
+                        "VK_LOADER_DEBUG": "all"
+                    }
+                }
             },
             "group": "build",
             "presentation": {

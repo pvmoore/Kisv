@@ -3,6 +3,10 @@ module kisv.util.general_util;
 import kisv.all;
 import std.traits : isSomeFunction;
 
+ulong megabytes(ulong numMegabytes) {
+    return numMegabytes * 1024*1024;
+}
+
 void throwIf(bool result) {
     if(result) {
         throw new Exception("Expectation failed");
@@ -82,8 +86,9 @@ string repeat(string s, long count) {
 string enumToString(E)(uint bits,) if (is(E == enum)) {
     import std.traits : EnumMembers;
     import std.format : format;
-     import core.bitop : popcnt;
+    import core.bitop : popcnt;
 
+    bool[string] set;
     string buf = "[";
     foreach(i, e; EnumMembers!E) {
 
@@ -92,7 +97,11 @@ string enumToString(E)(uint bits,) if (is(E == enum)) {
             if(popcnt(e) > 1) continue;
 
             string s = "%s".format(e);
-            buf ~= (buf.length==1 ? "" : ", ") ~ s;
+
+            if(s !in set) {
+                buf ~= (buf.length==1 ? "" : ", ") ~ s;
+                set[s] = true;
+            }
         }
     }
     return buf ~ "]";

@@ -9,18 +9,15 @@ VkDeviceMemory allocateMemory(VkDevice device,
 {
     void* pNext = null;
 
-    // Add VkMemoryAllocateFlagsInfo to the chain
-    if(allocateFlags != 0) {
-        // VK_MEMORY_ALLOCATE_DEVICE_MASK_BIT
-        // VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT
-        // VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_CAPTURE_REPLAY_BIT
+    // Add VkMemoryAllocateFlagsInfo to the chain if required
+    VkMemoryAllocateFlagsInfo flagsInfo = {
+        sType: VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO,
+        pNext: null,
+        flags: allocateFlags,
+        deviceMask: 0
+    };
 
-        VkMemoryAllocateFlagsInfo flagsInfo = {
-            sType: VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO,
-            pNext: null,
-            flags: allocateFlags,
-            deviceMask: 0
-        };
+    if(allocateFlags != 0) {
         pNext = &flagsInfo;
     }
 
@@ -63,4 +60,13 @@ void flushMappedMemory(VkDevice device, VkDeviceMemory memory, ulong offset, ulo
 }
 void flushMappedMemoryRanges(VkDevice device, VkMappedMemoryRange[] ranges) {
     check(vkFlushMappedMemoryRanges(device, ranges.length.as!uint, ranges.ptr));
+}
+void invalidateMemory(VkDevice device, VkDeviceMemory memory, ulong offset, ulong size) {
+    VkMappedMemoryRange r = {
+        sType: VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
+        memory: memory,
+        offset: offset,
+        size: size
+    };
+    check(vkInvalidateMappedMemoryRanges(device, 1, &r));
 }

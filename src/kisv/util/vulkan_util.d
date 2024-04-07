@@ -8,6 +8,10 @@ void check(VkResult r) {
     }
 }
 
+VkExtent3D toVkExtent3D(VkExtent2D extent, uint z) {
+    return VkExtent3D(extent.width, extent.height, z);
+}
+
 VkRect2D toVkRect2D(int x, int y, uint w, uint h) {
     return VkRect2D(VkOffset2D(x,y), VkExtent2D(w,h));
 }
@@ -27,4 +31,8 @@ VkClearValue clearValue(float r, float g, float b, float a) {
     VkClearColorValue value;
     value.float32 = [r,g,b,a];
     return value.as!VkClearValue;
+}
+
+string toString(VkMemoryRequirements req) {
+    return "VkMemoryRequirements{size:%s align:%s types:%b}".format(req.size, req.alignment, req.memoryTypeBits);
 }

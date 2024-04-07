@@ -143,7 +143,7 @@ public:
 //──────────────────────────────────────────────────────────────────────────────────────────────────
 private:
     void createWindow() {
-        log("\tCreating GLFW window");
+        log("Creating GLFW window");
         GLFWmonitor* monitor = glfwGetPrimaryMonitor();
         auto vidmode = glfwGetVideoMode(monitor);
         if(context.props.windowed) {

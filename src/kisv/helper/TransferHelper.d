@@ -46,6 +46,8 @@ public:
 
         memcpy(memoryMap, src.ptr, size);
 
+        log("Transfering %s bytes: %s", size, memoryMap[0..size]);
+
         // If the memory is host coherent we don't need to flush
         bool isHostCoherent = stagingUploadMemory.flags.isSet(VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
         if(!isHostCoherent) {

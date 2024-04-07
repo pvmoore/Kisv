@@ -16,11 +16,12 @@ public:
             vkDestroyShaderModule(context.device, e.value, null);
         }
     }
-    VkShaderModule get(string key) {
+    VkShaderModule get(string key, string targetEnv = "vulkan1.1") {
         auto ptr = key in shaderMap;
         if(ptr) return *ptr;
 
-        compile(key);
+        compile(key, targetEnv);
+        
         auto mod = readSpv(key);
         shaderMap[key] = mod;
         return mod;
@@ -32,7 +33,10 @@ private:
     string destDirectory;
     VkShaderModule[string] shaderMap;
 
-    void compile(string key) {
+    /**
+     * Example targetEnv: spirv1.6, vulkan1.3
+     */
+    void compile(string key, string targetEnv = "vulkan1.1") {
         import std.string : strip;
         import std.process : execute, Config;
 
@@ -49,7 +53,7 @@ private:
                 "-V",
                 "-Os",
                 "-t",
-                //"--target-env vulkan1.1",
+                "--target-env", targetEnv,
                 "-o",
                 dest,
                 src

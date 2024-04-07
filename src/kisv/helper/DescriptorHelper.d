@@ -18,12 +18,12 @@ public:
             vkDestroyDescriptorSetLayout(context.device, e.value, null);
         }
     }
-    VkDescriptorSetLayout getLayout(LayoutKey layoutKey) {
+    VkDescriptorSetLayout getLayout(string layoutKey) {
         VkDescriptorSetLayout layout = layouts.get(layoutKey, null);
         throwIf(!layout, "Layout key not found '%s'", layoutKey);
         return layout;
     }
-    VkDescriptorPool getPool(PoolKey poolKey) {
+    VkDescriptorPool getPool(string poolKey) {
         VkDescriptorPool pool = pools.get(poolKey, null);
         throwIf(!pool, "Pool key not found '%s'", poolKey);
         return pool;
@@ -31,7 +31,7 @@ public:
     /**
      * createLayout("key", tuple(type, stage), tuple(type,stage) ...etc);
      */
-    VkDescriptorSetLayout createLayout(LayoutKey layoutKey, Tuple!(VkDescriptorType, VkShaderStageFlagBits)[] bindings...) {
+    VkDescriptorSetLayout createLayout(string layoutKey, Tuple!(VkDescriptorType, VkShaderStageFlagBits)[] bindings...) {
         auto vkBindings = new VkDescriptorSetLayoutBinding[bindings.length];
         foreach(i, b; bindings) {
             VkDescriptorSetLayoutBinding bind = {
@@ -45,13 +45,13 @@ public:
         }
         return createLayout(layoutKey, vkBindings);
     }
-    VkDescriptorSetLayout createLayout(LayoutKey layoutKey, VkDescriptorSetLayoutBinding[] bindings...) {
+    VkDescriptorSetLayout createLayout(string layoutKey, VkDescriptorSetLayoutBinding[] bindings...) {
         throwIf((layoutKey in layouts) !is null, "Layout key already created '%s'", layoutKey);
         log("Creating VkDescriptorSetLayout '%s' %s bindings", layoutKey, bindings.length);
 
         VkDescriptorSetLayoutCreateInfo layoutCreateInfo = {
             sType: VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-            flags:0,
+            flags: 0,
             bindingCount: bindings.length.as!uint,
             pBindings: bindings.ptr
         };
@@ -61,7 +61,7 @@ public:
         layouts[layoutKey] = layout;
         return layout;
     }
-    VkDescriptorPool createPool(PoolKey poolKey, uint maxSets, Tuple!(VkDescriptorType, int)[] sizes...) {
+    VkDescriptorPool createPool(string poolKey, uint maxSets, Tuple!(VkDescriptorType, int)[] sizes...) {
         auto vkSizes = new VkDescriptorPoolSize[sizes.length];
         foreach(i, s; sizes) {
             VkDescriptorPoolSize size = {
@@ -72,8 +72,8 @@ public:
         }
         return createPool(poolKey, maxSets, vkSizes);
     }
-    VkDescriptorPool createPool(PoolKey poolKey, uint maxSets, VkDescriptorPoolSize[] sizes...) {
-
+    VkDescriptorPool createPool(string poolKey, uint maxSets, VkDescriptorPoolSize[] sizes...) {
+        log("Creating VkDescriptorPool with %s", sizes.map!(it=>"{%s,%s}".format(it.type, it.descriptorCount)));
         VkDescriptorPoolCreateInfo poolCreateInfo = {
             sType: VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
             flags:0,
@@ -86,7 +86,7 @@ public:
         pools[poolKey] = pool;
         return pool;
     }
-    VkDescriptorSet allocateSet(PoolKey poolKey, LayoutKey layoutKey) {
+    VkDescriptorSet allocateSet(string poolKey, string layoutKey) {
         VkDescriptorPool pool = getPool(poolKey);
         VkDescriptorSetLayout layout = getLayout(layoutKey);
 
@@ -102,8 +102,8 @@ public:
     }
 private:
     KisvContext context;
-    VkDescriptorSetLayout[LayoutKey] layouts;
-    VkDescriptorPool[PoolKey] pools;
+    VkDescriptorSetLayout[string] layouts;
+    VkDescriptorPool[string] pools;
 }
 //──────────────────────────────────────────────────────────────────────────────────────────────────
 // final class DescriptorWrites {

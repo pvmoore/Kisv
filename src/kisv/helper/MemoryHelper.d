@@ -23,10 +23,10 @@ public:
             vkFreeMemory(context.device, e.value.handle, null);
         }
     }
-    MemoryInfo getMemory(string key) {
+    MemoryInfo* getMemory(string key) {
         MemoryInfo* ptr = key in allocatedMemory;
         throwIf(!ptr, "Memory '%s' not allocated", key);
-        return *ptr;
+        return ptr;
     }
     MemoryInfo allocateDeviceMemory(string key, ulong size, VkMemoryAllocateFlagBits flags = 0.as!VkMemoryAllocateFlagBits) {
         log("Allocating device memory: '%s' %s", key, mbToString(size));
@@ -44,12 +44,18 @@ public:
         memoryToAllocOffset[key] = 0;
         return info;
     }
-    /** Bind the buffer to the memory and return the next free memory offset */
-    ulong bind(string memoryKey, VkBuffer buffer) {
-        MemoryInfo* memory = memoryKey in allocatedMemory;
-        throwIf(!memory, "Memory '%s' not found", memoryKey);
+    MemoryInfo allocateStagingDownloadMemory(string key, ulong size, VkMemoryAllocateFlagBits flags = 0.as!VkMemoryAllocateFlagBits) {
+        log("Allocating staging download memory: '%s' %s", key, mbToString(size));
+        VkDeviceMemory handle = allocateMemory(context.device, hostDownloadType, size, flags);
+        auto info = MemoryInfo(handle, memoryTypes[hostDownloadType].propertyFlags, size);
+        allocatedMemory[key] = info;
+        memoryToAllocOffset[key] = 0;
+        return info;
+    }
+    /** Bind the buffer to the memory and return the memory offset */
+    ulong bind(string memoryKey, VkBuffer buffer, ulong delegate(ulong) customAlignment = null) {
+        MemoryInfo* memory = getMemory(memoryKey);
         ulong offset = memoryToAllocOffset[memoryKey];
-        log("Binding buffer to memory '%s'", memoryKey);
 
         // Get requirements
         VkMemoryRequirements memRequirements;
@@ -58,25 +64,29 @@ public:
         // Align
         offset = alignedTo(offset, memRequirements.alignment);
 
+        if(customAlignment) {
+            offset = customAlignment(offset);
+        }
+
         throwIf(offset + memRequirements.size > memory.size,
             "Memory allocation exceeded. allocation size = %s, current offset = %s, request size = %s",
             memory.size, offset, memRequirements.size);
 
+        log("Binding buffer to memory '%s' at offset %s size %s (%%%.2f used)", memoryKey, offset,
+            memRequirements.size, (offset+memRequirements.size).as!double / memory.size*100.0);
+        log("\tRequirements = %s", memRequirements.toString());
+
         // Bind
         check(vkBindBufferMemory(context.device, buffer, memory.handle, offset));
 
-        log("\tBound buffer at offset %s size %s (%%%.2f used)", offset, memRequirements.size,
-            (offset+memRequirements.size).as!double / memory.size*100.0);
-        offset += memRequirements.size;
-        memoryToAllocOffset[memoryKey] = offset;
+        ulong nextOffset = offset + memRequirements.size;
+        memoryToAllocOffset[memoryKey] = nextOffset;
         return offset;
     }
-    /** Bind the image to the memory and return the next free memory offset */
+    /** Bind the image to the memory and return the memory offset */
     ulong bind(string memoryKey, VkImage image) {
-        MemoryInfo* memory = memoryKey in allocatedMemory;
-        throwIf(!memory, "Memory '%s' not found", memoryKey);
+        MemoryInfo* memory = getMemory(memoryKey);
         ulong offset = memoryToAllocOffset[memoryKey];
-        log("Binding buffer to memory '%s'", memoryKey);
 
         // Get requirements
         VkMemoryRequirements memRequirements;
@@ -89,14 +99,23 @@ public:
             "Memory allocation exceeded. allocation size = %s, current offset = %s, request size = %s",
             memory.size, offset, memRequirements.size);
 
+        log("Binding image to memory '%s' at offset %s size %s (%%%.2f used)", memoryKey, offset,
+            memRequirements.size, (offset+memRequirements.size).as!double / memory.size*100.0);
+
         // Bind
         check(vkBindImageMemory(context.device, image, memory.handle, offset));
 
-        log("\tBound buffer at offset %s size %s (%%%.2f used)", offset, memRequirements.size,
-            (offset+memRequirements.size).as!double / memory.size*100.0);
-        offset += memRequirements.size;
-        memoryToAllocOffset[memoryKey] = offset;
+        ulong nextOffset = offset + memRequirements.size;
+        memoryToAllocOffset[memoryKey] = nextOffset;
         return offset;
+    }
+    void* map(string memoryKey, ulong offset, ulong size) {
+        MemoryInfo* mem = getMemory(memoryKey);
+        return mapMemory(context.device, mem.handle, offset, size);
+    }
+    void unmap(string memoryKey) {
+        MemoryInfo* mem = getMemory(memoryKey);
+        vkUnmapMemory(context.device, mem.handle);
     }
 private:
     KisvContext context;

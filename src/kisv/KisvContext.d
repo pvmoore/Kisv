@@ -90,7 +90,7 @@ public:
             pApplicationName: props.appName.toStringz(),
             applicationVersion: props.appVersion,
             pEngineName: props.engineName.toStringz(),
-            engineVersion:props.engineVersion,
+            engineVersion: props.engineVersion,
             apiVersion: props.apiVersion.intValue()
         };
 
@@ -126,7 +126,7 @@ public:
 				| VK_DEBUG_REPORT_ERROR_BIT_EXT
 				| VK_DEBUG_REPORT_WARNING_BIT_EXT
 			//	| VK_DEBUG_REPORT_INFORMATION_BIT_EXT
-            //  | VK_DEBUG_REPORT_DEBUG_BIT_EXT
+            //    | VK_DEBUG_REPORT_DEBUG_BIT_EXT
 				| VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT,
             pfnCallback: &dbgFunc
         };
@@ -173,6 +173,10 @@ public:
         throwIf(selected >= physicalDevices.length);
         this.physicalDevice = physicalDevices[selected];
         log("\tSelected physical device '%s'", physicalDevice.name());
+        log("\tSupported extensions:");
+        foreach(e; physicalDevice.extensions) {
+            log("\t\t%s %s", e.extensionName.fromStringz(), versionToString(e.specVersion));
+        }
 
         this.memory = new MemoryHelper(this);
     }
@@ -186,6 +190,7 @@ public:
         this.features2 = helper.query();
     }
     void createLogicalDevice(uint[uint] queuesPerFamily) {
+        log("Creating logical device");
         VkDeviceQueueCreateInfo[] queueCreateInfos;
 
         foreach(entry; queuesPerFamily.byKeyValue()) {
@@ -205,6 +210,10 @@ public:
         }
 
         auto extensions = props.deviceExtensions.map!(it=>it.toStringz()).array;
+        log("\tEnabling extensions:");
+        foreach(e; props.deviceExtensions) {
+            log("\t\t%s", e);
+        }
 
         VkDeviceCreateInfo createInfo = {
             sType: VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
