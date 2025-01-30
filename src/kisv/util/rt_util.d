@@ -11,7 +11,7 @@ import kisv.all;
  */
 VkTransformMatrixKHR identityTransformMatrix() {
     // struct VkTransformMatrixKHR {
-    //     float[3][4] matrix;
+    //     float[4][3] matrix;
     // }
 
     VkTransformMatrixKHR transform;
@@ -19,13 +19,13 @@ VkTransformMatrixKHR identityTransformMatrix() {
     float* fp = (&transform).as!(float*);
     fp[0..VkTransformMatrixKHR.sizeof/4] = 0.0f;
 
-    // transform.matrix[0][0] = 1;
-    // transform.matrix[1][1] = 1;
-    // transform.matrix[2][2] = 1;
+    transform.matrix[0][0] = 1;
+    transform.matrix[1][1] = 1;
+    transform.matrix[2][2] = 1;
 
-    transform.matrix[0] = 1;
-    transform.matrix[5] = 1;
-    transform.matrix[10] = 1;
+    // transform.matrix[0] = 1;
+    // transform.matrix[5] = 1;
+    // transform.matrix[10] = 1;
 
     log("transform = %s", fp[0..12]);
     log("matrix = %s", transform.matrix);

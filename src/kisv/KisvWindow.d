@@ -145,7 +145,7 @@ private:
     void createWindow() {
         log("Creating GLFW window");
         GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-        auto vidmode = glfwGetVideoMode(monitor);
+        GLFWvidmode* vidmode = glfwGetVideoMode(monitor);
         if(context.props.windowed) {
             log("\tWindowed mode selected");
             monitor = null;
