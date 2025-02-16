@@ -21,6 +21,14 @@ public:
                     return i.as!int;
                 }
             }
+            foreach(i, d; devices) {
+                if(d.properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU &&
+                  d.supportsExtensions(props.deviceExtensions) &&
+                  d.supportsVersion(props.apiVersion))
+                {
+                    return i.as!int;
+                }
+            }
             throw new Exception("No suitable physical device found");
         });
 
