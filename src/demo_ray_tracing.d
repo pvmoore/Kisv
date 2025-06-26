@@ -300,7 +300,7 @@ private:
         this.storageImage = context.images.createImage(
             IMG_TARGET,
             toVkExtent3D(context.window.size(), 1),
-            context.window.colorFormat,
+            VK_FORMAT_R8G8B8A8_UNORM,
             VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT);
 
         context.memory.bind(MEM_GPU, storageImage);
@@ -855,7 +855,7 @@ private:
         };
 
         VkDescriptorImageInfo storageImageDescriptor = {
-            imageView: context.images.getOrCreateView(IMG_TARGET, VK_IMAGE_VIEW_TYPE_2D, context.window.colorFormat),
+            imageView: context.images.getOrCreateView(IMG_TARGET, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8G8B8A8_UNORM),
             imageLayout: VK_IMAGE_LAYOUT_GENERAL
         };
 
