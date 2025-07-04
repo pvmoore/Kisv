@@ -83,8 +83,8 @@ public:
     override void run() {
         context.window.show();
 
-        context.startRenderLoop((KisvFrame frame) {
-            renderScene(frame);
+        context.startRenderLoop((KisvFrame frame, uint imageIndex) {
+            renderScene(frame, imageIndex);
         });
     }
 //──────────────────────────────────────────────────────────────────────────────────────────────────
@@ -220,7 +220,7 @@ private:
                                                     VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
         // Bind the buffer to GPU memory
-        context.memory.bind(MEM_GPU, vertexBuffer);
+        context.memory.bind(MEM_GPU, vertexBuffer, 0);
 
         // Upload the vertices to the GPU
         context.transfer.transferAndWaitFor(vertices, vertexBuffer);
@@ -234,7 +234,7 @@ private:
                                                      VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
         // Bind the buffer to GPU memory
-        context.memory.bind(MEM_GPU, indicesBuffer);
+        context.memory.bind(MEM_GPU, indicesBuffer, 0);
 
         // Upload the indices to the GPU
         context.transfer.transferAndWaitFor(indices, indicesBuffer);
@@ -251,7 +251,7 @@ private:
                                                      VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
         // Bind the buffer to GPU memory
-        context.memory.bind(MEM_GPU, uniformBuffer);
+        context.memory.bind(MEM_GPU, uniformBuffer, 16);
 
         // Initialise the view and projection matrices
         float size = 2;
@@ -542,7 +542,7 @@ private:
 
         check(vkCreateGraphicsPipelines(context.device, null, 1, &pipelineCreateInfo, null, &pipeline));
     }
-    void renderScene(KisvFrame frame) {
+    void renderScene(KisvFrame frame, uint imageIndex) {
         auto cmd = frame.commands;
         cmd.beginOneTimeSubmit();
 

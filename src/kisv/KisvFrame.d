@@ -6,12 +6,6 @@ final class KisvFrame {
     /** The frame index (0..swapchain.numImages()) */
     uint index;
 
-    /** Current swapchain image */
-    VkImage image;
-
-    /** Current swapchain image view */
-    VkImageView imageView;
-
     /** Current framebuffer */
     VkFramebuffer frameBuffer;
 

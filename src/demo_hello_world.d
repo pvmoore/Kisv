@@ -77,8 +77,8 @@ public:
     override void run() {
         context.window.show();
 
-        context.startRenderLoop((KisvFrame frame) {
-            renderScene(frame);
+        context.startRenderLoop((KisvFrame frame, uint imageIndex) {
+            renderScene(frame, imageIndex);
         });
     }
 private:
@@ -110,7 +110,7 @@ private:
         windowVsync: false
     };
 
-    void renderScene(KisvFrame frame) {
+    void renderScene(KisvFrame frame, uint imageIndex) {
         auto cmd = frame.commands;
         cmd.beginOneTimeSubmit();
 

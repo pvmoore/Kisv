@@ -53,7 +53,7 @@ public:
         return info;
     }
     /** Bind the buffer to the memory and return the memory offset */
-    ulong bind(string memoryKey, VkBuffer buffer, ulong delegate(ulong) customAlignment = null) {
+    ulong bind(string memoryKey, VkBuffer buffer, uint customAlignment) {
         MemoryInfo* memory = getMemory(memoryKey);
         ulong offset = memoryToAllocOffset[memoryKey];
 
@@ -62,11 +62,8 @@ public:
         vkGetBufferMemoryRequirements(context.device, buffer, &memRequirements);
 
         // Align
-        offset = alignedTo(offset, memRequirements.alignment);
-
-        if(customAlignment) {
-            offset = customAlignment(offset);
-        }
+        ulong alignment = maxOf(customAlignment, memRequirements.alignment);
+        offset = alignedTo(offset, alignment);
 
         throwIf(offset + memRequirements.size > memory.size,
             "Memory allocation exceeded. allocation size = %s, current offset = %s, request size = %s",

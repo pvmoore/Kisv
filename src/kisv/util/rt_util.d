@@ -30,6 +30,10 @@ VkTransformMatrixKHR identityTransformMatrix() {
     log("transform = %s", fp[0..12]);
     log("matrix = %s", transform.matrix);
 
+    ubyte* f = (&transform).as!(ubyte*);
+
+    log("%s", f[0..VkTransformMatrixKHR.sizeof]);  
+
     return transform;
 }
 

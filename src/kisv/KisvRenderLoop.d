@@ -21,7 +21,7 @@ public:
         }
         if(graphicsCP) vkDestroyCommandPool(context.device, graphicsCP, null);
     }
-    void run(void delegate(KisvFrame) renderCallback) {
+    void run(void delegate(KisvFrame, uint) renderCallback) {
         this.renderCallback = renderCallback;
         log("╔═════════════════════════════════════════════════════════════════╗");
         log("║ Render loop started                                             ║");
@@ -69,7 +69,7 @@ private:
     KisvWindow window;
     KisvFrame[] frameResources;
     VkCommandPool graphicsCP;
-    void delegate(KisvFrame) renderCallback;
+    void delegate(KisvFrame, uint) renderCallback;
     double framePerSecond = 1;
     double frameSeconds = 0;
     ulong frameNumber;
@@ -88,17 +88,19 @@ private:
         resetFence(context.device, frame.fence);
 
         // Get the next available image view.
-        uint index = window.acquireNext(frame.imageAvailable, null);
+        uint imageIndex = window.acquireNext(frame.imageAvailable, null);
 
         // Let the app do its thing
-        renderCallback(frame);
+        renderCallback(frame, imageIndex);
 
         // Present
         window.queuePresent(
             context.queues.getQueue(graphicsQueueFamily, 0),
-            index,                  // image index
+            imageIndex,             // image index
             [frame.renderFinished]  // wait semaphores
         );
+
+        frameIndex = (frameIndex + 1) % frameResources.length.as!uint;
     }
     void createCommandPool() {
         this.graphicsCP = .createCommandPool(context.device, graphicsQueueFamily,
@@ -112,8 +114,6 @@ private:
             f.renderFinished = createSemaphore(context.device);
             f.fence          = createFence(context.device, true);
             f.commands       = allocCommandBuffer(context.device, graphicsCP);
-            f.image          = window.images[i];
-            f.imageView      = window.views[i];
             f.frameBuffer    = window.frameBuffers[i];
             f.seconds        = 0;
             f.perSecond      = 0;

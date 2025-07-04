@@ -7,15 +7,26 @@ public:
     this(KisvContext context) {
         this.context = context;
     }
-    auto addFeature(void* feature) {
-        this.features ~= feature.as!(FeatureStructure*);
+    auto add(VkPhysicalDeviceAccelerationStructureFeaturesKHR feature) {
+        this.accelerationStructureFeatures = feature;
+        pointers ~= cast(FeatureStructure*)&accelerationStructureFeatures;
+        return this;
+    }
+    auto add(VkPhysicalDeviceRayTracingPipelineFeaturesKHR feature) {
+        this.rayTracingPipelineFeatures = feature;
+        pointers ~= cast(FeatureStructure*)&rayTracingPipelineFeatures;
+        return this;
+    }
+    auto add(VkPhysicalDeviceBufferDeviceAddressFeaturesEXT feature) {
+        this.bufferDeviceAddressFeatures = feature;
+        pointers ~= cast(FeatureStructure*)&bufferDeviceAddressFeatures;
         return this;
     }
     void* query() {
         features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
         void* next = null;
 
-        foreach(f; features) {
+        foreach(f; pointers) {
             f.pNext = next;
             next = f;
         }
@@ -28,6 +39,10 @@ public:
 private:
     KisvContext context;
     VkPhysicalDeviceFeatures2 features2;
-    FeatureStructure*[] features;
-    struct FeatureStructure { ulong sType; void* pNext; /** the rest of the structure here... */ }
+    struct FeatureStructure { VkStructureType sType; void* pNext; /** the rest of the structure here... */ }
+
+    FeatureStructure*[] pointers;
+    VkPhysicalDeviceAccelerationStructureFeaturesKHR accelerationStructureFeatures;
+    VkPhysicalDeviceRayTracingPipelineFeaturesKHR rayTracingPipelineFeatures;
+    VkPhysicalDeviceBufferDeviceAddressFeaturesEXT bufferDeviceAddressFeatures;
 }

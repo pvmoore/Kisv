@@ -129,6 +129,34 @@ public:
         };
         vkGetPhysicalDeviceProperties2(handle, &props2);
     }
+    VkPhysicalDeviceBufferDeviceAddressFeatures getBufferDeviceAddressFeatures() {
+        VkPhysicalDeviceBufferDeviceAddressFeatures feats = {
+            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES
+        };
+        getFeatures2(&feats);
+        return feats;
+    }
+    VkPhysicalDeviceAccelerationStructureFeaturesKHR getAccelerationStructureFeatures() {
+        VkPhysicalDeviceAccelerationStructureFeaturesKHR feats = {
+            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR
+        };
+        getFeatures2(&feats);
+        return feats;
+    }
+    VkPhysicalDeviceRayTracingPipelineFeaturesKHR getRayTracingPipelineFeatures() {
+        VkPhysicalDeviceRayTracingPipelineFeaturesKHR feats = {
+            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR
+        };
+        getFeatures2(&feats);
+        return feats;
+    }
+    void getFeatures2(void* pNext) {
+        VkPhysicalDeviceFeatures2 feats2 = {
+            sType: VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+            pNext: pNext
+        };
+        vkGetPhysicalDeviceFeatures2(handle, &feats2);
+    }
 
     override string toString() {
         return "PhysicalDevice{name:'%s', type:%s, apiVersion:%s, driverVersion:%s}".format(

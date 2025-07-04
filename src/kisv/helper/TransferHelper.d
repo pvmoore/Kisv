@@ -184,7 +184,7 @@ private:
 
         this.stagingUploadBuffer = context.buffers.createBuffer("TransferHelper-staging-upload", bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
 
-        context.memory.bind("TransferHelper-staging-upload", stagingUploadBuffer);
+        context.memory.bind("TransferHelper-staging-upload", stagingUploadBuffer, 0);
 
         // Map the memory
         this.memoryMap = mapMemory(context.device, stagingUploadMemory.handle, 0, bufferSize);

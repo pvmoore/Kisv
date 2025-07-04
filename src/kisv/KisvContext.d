@@ -163,7 +163,7 @@ public:
         GLFWLoader.unload();
         VulkanLoader.unload();
     }
-    void startRenderLoop(void delegate(KisvFrame) renderCallback) {
+    void startRenderLoop(void delegate(KisvFrame, uint) renderCallback) {
         renderLoop.run(renderCallback);
     }
     void selectPhysicalDevice(int delegate(KisvPhysicalDevice[]) func) {

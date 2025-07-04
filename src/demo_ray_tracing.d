@@ -66,9 +66,9 @@ public:
         };
 
         context.selectDeviceFeatures((FeatureHelper f) {
-            f.addFeature(&asFeatures)
-             .addFeature(&rtpFeatures)
-             .addFeature(&bdaFeatures);
+            f.add(asFeatures)
+             .add(rtpFeatures)
+             .add(bdaFeatures);
         });
 
         logStructure(asFeatures);
@@ -116,8 +116,8 @@ public:
     override void run() {
         context.window.show();
 
-        context.startRenderLoop((KisvFrame frame) {
-            renderScene(frame);
+        context.startRenderLoop((KisvFrame frame, uint imageIndex) {
+            renderScene(frame, imageIndex);
         });
     }
 private:
@@ -150,7 +150,7 @@ private:
     }
     KisvProperties props = {
         appName: "RayTracing",
-        apiVersion: VkVersion(1, 1, 0),
+        apiVersion: VkVersion(1, 2, 0),
         instanceLayers: [
             "VK_LAYER_KHRONOS_validation"//,
             //"VK_LAYER_LUNARG_api_dump"
@@ -271,7 +271,7 @@ private:
                                                      VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
         // Bind the buffer to GPU memory
-        context.memory.bind(MEM_GPU, uniformBuffer);
+        context.memory.bind(MEM_GPU, uniformBuffer, 0);
 
         // Initialise the view and projection matrices
 
@@ -290,6 +290,9 @@ private:
 
         float* ptr = cast(float*)&ubo;
         log("Ubo data = %s", ptr[0..UBO.sizeof/4]);
+
+        log("viewInverse:\n%s", ubo.viewInverse);
+        log("projInverse:\n%s", ubo.projInverse);
 
         log("Uploading uniform buffer data to the GPU");
         context.transfer.transferAndWaitFor([ubo], uniformBuffer);
@@ -329,10 +332,15 @@ private:
 
         uint[] indices = [ 0, 1, 2 ];
 
+        VkTransformMatrixKHR transform = identityTransformMatrix();
+
         log("Vertices size = %s", vertices.length*Vertex.sizeof);
         log("Indices size = %s", indices.length * uint.sizeof);
+        log("Transform size = %s", VkTransformMatrixKHR.sizeof);
 
-        VkTransformMatrixKHR transform = identityTransformMatrix();
+        log("Vertices = %s", (cast(ubyte*)vertices.ptr)[0..vertices.length*Vertex.sizeof]);
+        log("Indices = %s", (cast(ubyte*)indices.ptr)[0..indices.length*uint.sizeof]);
+        log("Transform = %s", (cast(ubyte*)&transform)[0..VkTransformMatrixKHR.sizeof]);
 
         // Create buffers for vertices, indices and transforms
         vertexBuffer = context.buffers.createBuffer(BUF_VERTEX,
@@ -358,9 +366,9 @@ private:
             context.memory.allocateStagingUploadMemory(MEM_INDICES, 1.megabytes(), VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT);
             context.memory.allocateStagingUploadMemory(MEM_TRANSFORMS, 1.megabytes(), VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT);
 
-            context.memory.bind(MEM_VERTICES, vertexBuffer);
-            context.memory.bind(MEM_INDICES, indexBuffer);
-            context.memory.bind(MEM_TRANSFORMS, transformBuffer);
+            context.memory.bind(MEM_VERTICES, vertexBuffer, 0);
+            context.memory.bind(MEM_INDICES, indexBuffer, 0);
+            context.memory.bind(MEM_TRANSFORMS, transformBuffer, 0);
 
             void* map1 = context.memory.map(MEM_VERTICES, 0, VK_WHOLE_SIZE);
             void* map2 = context.memory.map(MEM_INDICES, 0, VK_WHOLE_SIZE);
@@ -467,7 +475,7 @@ private:
             accelerationStructureBuildSizesInfo.accelerationStructureSize,
             VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
 
-        context.memory.bind(MEM_GPU, blas.buffer);
+        context.memory.bind(MEM_GPU, blas.buffer, 0);
 
         // Create the acceleration structure
         VkAccelerationStructureCreateInfoKHR accelerationStructureCreateInfo = {
@@ -482,9 +490,7 @@ private:
         blas.scratchBuffer = context.buffers.createBuffer(BUF_BLAS_SCRATCH, accelerationStructureBuildSizesInfo.buildScratchSize,
             VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
 
-        context.memory.bind(MEM_GPU, blas.scratchBuffer, (ulong offset) {
-            return alignedTo(offset, context.physicalDevice.accelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment);
-        });
+        context.memory.bind(MEM_GPU, blas.scratchBuffer, context.physicalDevice.accelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment);
 
         blas.scratchBufferDeviceAddress = getDeviceAddress(context.device, blas.scratchBuffer);
 
@@ -575,12 +581,9 @@ private:
                     VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
                     VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
-            static if(false) {
+            static if(true) {
                 // Use GPU
-                context.memory.bind(MEM_GPU, instanceBuffer, (ulong offset) {
-                    // The instances must be 16 byte aligned
-                    return alignedTo(offset, 16);
-                });
+                context.memory.bind(MEM_GPU, instanceBuffer, 16);
 
                 // Copy the instance data to the GPU
                 context.transfer.transferAndWaitFor([instance], instanceBuffer);
@@ -643,7 +646,7 @@ private:
             accelerationStructureBuildSizesInfo.accelerationStructureSize,
             VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
 
-        context.memory.bind(MEM_GPU, tlas.buffer);
+        context.memory.bind(MEM_GPU, tlas.buffer, 0);
 
         // Create the tlas acceleration structure
         VkAccelerationStructureCreateInfoKHR accelerationStructureCreateInfo = {
@@ -658,9 +661,7 @@ private:
         tlas.scratchBuffer = context.buffers.createBuffer(BUF_TLAS_SCRATCH, accelerationStructureBuildSizesInfo.buildScratchSize,
             VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
 
-        context.memory.bind(MEM_GPU, tlas.scratchBuffer, (ulong offset) {
-            return alignedTo(offset, context.physicalDevice.accelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment);
-        });
+        context.memory.bind(MEM_GPU, tlas.scratchBuffer, context.physicalDevice.accelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment);
 
         tlas.scratchBufferDeviceAddress = getDeviceAddress(context.device, tlas.scratchBuffer);
 
@@ -705,7 +706,8 @@ private:
 
         tlas.deviceAddress = getDeviceAddress(context.device, tlas.handle);
 
-        log("TLAS deviceAddress = %s (%s)", tlas.deviceAddress, tlas.deviceAddress - blas.deviceAddress);
+        log("TLAS deviceAddress          = %s (%s)", tlas.deviceAddress, tlas.deviceAddress - blas.deviceAddress);
+        log("TLAS buffer device address2 = %s", getDeviceAddress(context.device, tlas.buffer));
 
         // We don't need the instancesBuffer after this point
         // or the tlas.scratchBuffer
@@ -872,7 +874,7 @@ private:
         VkDescriptorBufferInfo uniformBufferInfo = {
             buffer: uniformBuffer,
             offset: 0,
-            range: UBO.sizeof
+            range: VK_WHOLE_SIZE
         };
         VkWriteDescriptorSet uniformWrite = {
             sType: VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -900,6 +902,8 @@ private:
 		uint groupCount = 3;
 		uint sbtSize = groupCount * handleSizeAligned;
 
+        log("handleSize = %s", handleSize);
+        log("handleSizeAligned = %s", handleSizeAligned);
         log("sbtSize = %s", sbtSize);
 
         // Fetch the shader group handles
@@ -912,15 +916,9 @@ private:
         sbtMissBuffer = context.buffers.createBuffer(BUF_SBT_MISS, handleSize, VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
         sbtHitBuffer = context.buffers.createBuffer(BUF_SBT_HIT, handleSize, VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
 
-        ulong raygenOffset = context.memory.bind(MEM_UPLOAD, sbtRaygenBuffer, (ulong offset) {
-            return alignedTo(offset, context.physicalDevice.rtPipelineProperties.shaderGroupBaseAlignment);
-        });
-        ulong missOffset = context.memory.bind(MEM_UPLOAD, sbtMissBuffer, (ulong offset) {
-            return alignedTo(offset, context.physicalDevice.rtPipelineProperties.shaderGroupBaseAlignment);
-        });
-        ulong hitOffset = context.memory.bind(MEM_UPLOAD, sbtHitBuffer, (ulong offset) {
-            return alignedTo(offset, context.physicalDevice.rtPipelineProperties.shaderGroupBaseAlignment);
-        });
+        ulong raygenOffset = context.memory.bind(MEM_UPLOAD, sbtRaygenBuffer, context.physicalDevice.rtPipelineProperties.shaderGroupBaseAlignment);
+        ulong missOffset = context.memory.bind(MEM_UPLOAD, sbtMissBuffer, context.physicalDevice.rtPipelineProperties.shaderGroupBaseAlignment);
+        ulong hitOffset = context.memory.bind(MEM_UPLOAD, sbtHitBuffer, context.physicalDevice.rtPipelineProperties.shaderGroupBaseAlignment);
 
         log("raygenOffset = %s", raygenOffset);
         log("missOffset = %s", missOffset);
@@ -944,7 +942,7 @@ private:
             VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
             VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
-        ulong offset = context.memory.bind(MEM_DOWNLOAD, tempBuffer);
+        ulong offset = context.memory.bind(MEM_DOWNLOAD, tempBuffer, 0);
 
         VkCopyAccelerationStructureToMemoryInfoKHR copyToMemory = {
             sType: VK_STRUCTURE_TYPE_COPY_ACCELERATION_STRUCTURE_TO_MEMORY_INFO_KHR,
@@ -981,7 +979,7 @@ private:
             VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
 
-        ulong offset = context.memory.bind(MEM_UPLOAD, tempBuffer);
+        ulong offset = context.memory.bind(MEM_UPLOAD, tempBuffer, 0);
 
         ubyte* map = cast(ubyte*)context.memory.map(MEM_UPLOAD, 0, VK_WHOLE_SIZE);
         memcpy(map + offset, data.ptr, data.length);
@@ -1005,7 +1003,9 @@ private:
 
         context.memory.unmap(MEM_UPLOAD);
     }
-    void renderScene(KisvFrame frame) {
+    void renderScene(KisvFrame frame, uint imageIndex) {
+
+        VkImage swapchainImage = context.window.images[imageIndex];
 
         uint handleSize = context.physicalDevice.rtPipelineProperties.shaderGroupHandleSize;
 		uint handleSizeAligned = alignedTo(handleSize, context.physicalDevice.rtPipelineProperties.shaderGroupHandleAlignment).as!uint;
@@ -1027,7 +1027,7 @@ private:
         };
         VkStridedDeviceAddressRegionKHR callableShaderSbtEntry = {};
 
-        auto size = context.window.size();
+        VkExtent2D size = context.window.size();
 
         VkImageSubresourceRange subresourceRange = {
             aspectMask: VK_IMAGE_ASPECT_COLOR_BIT,
@@ -1043,7 +1043,7 @@ private:
             newLayout: VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             srcAccessMask: 0,
             dstAccessMask: VK_ACCESS_TRANSFER_WRITE_BIT,
-            image: frame.image,
+            image: swapchainImage,
             srcQueueFamilyIndex: VK_QUEUE_FAMILY_IGNORED,
             dstQueueFamilyIndex: VK_QUEUE_FAMILY_IGNORED,
             subresourceRange: subresourceRange
@@ -1054,7 +1054,7 @@ private:
             newLayout: VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
             srcAccessMask: VK_ACCESS_TRANSFER_WRITE_BIT,
             dstAccessMask: 0,
-            image: frame.image,
+            image: swapchainImage,
             srcQueueFamilyIndex: VK_QUEUE_FAMILY_IGNORED,
             dstQueueFamilyIndex: VK_QUEUE_FAMILY_IGNORED,
             subresourceRange: subresourceRange
@@ -1065,7 +1065,7 @@ private:
             oldLayout: VK_IMAGE_LAYOUT_UNDEFINED,
             newLayout: VK_IMAGE_LAYOUT_GENERAL,
             srcAccessMask: 0,
-            dstAccessMask: 0,
+            dstAccessMask: VK_ACCESS_SHADER_WRITE_BIT,
             image: storageImage,
             srcQueueFamilyIndex: VK_QUEUE_FAMILY_IGNORED,
             dstQueueFamilyIndex: VK_QUEUE_FAMILY_IGNORED,
@@ -1076,7 +1076,7 @@ private:
             sType: VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
             oldLayout: VK_IMAGE_LAYOUT_GENERAL,
             newLayout: VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-            srcAccessMask: 0,
+            srcAccessMask: VK_ACCESS_SHADER_WRITE_BIT,
             dstAccessMask: VK_ACCESS_TRANSFER_READ_BIT,
             image: storageImage,
             srcQueueFamilyIndex: VK_QUEUE_FAMILY_IGNORED,
@@ -1151,7 +1151,7 @@ private:
         vkCmdCopyImage(
             cmd,
             storageImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-            frame.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            swapchainImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             1,
             &copyRegion);
 
