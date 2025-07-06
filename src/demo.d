@@ -14,6 +14,7 @@ import demo_rectangle;
 
 pragma(lib, "user32.lib");
 
+
 //extern(C) __gshared string[] rt_options = [
 //    "gcopt=profile:1"
 //];

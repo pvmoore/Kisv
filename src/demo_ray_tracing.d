@@ -359,7 +359,7 @@ private:
             VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
             VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
-        enum OPT = 0;
+        enum OPT = 2;
 
         static if(OPT==0) {
             context.memory.allocateStagingUploadMemory(MEM_VERTICES, 1.megabytes(), VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT);
@@ -387,9 +387,9 @@ private:
             context.memory.allocateDeviceMemory(MEM_INDICES, 1.megabytes(), VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT);
             context.memory.allocateDeviceMemory(MEM_TRANSFORMS, 1.megabytes(), VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT);
 
-            context.memory.bind(MEM_VERTICES, vertexBuffer);
-            context.memory.bind(MEM_INDICES, indexBuffer);
-            context.memory.bind(MEM_TRANSFORMS, transformBuffer);
+            context.memory.bind(MEM_VERTICES, vertexBuffer, 0);
+            context.memory.bind(MEM_INDICES, indexBuffer, 0);
+            context.memory.bind(MEM_TRANSFORMS, transformBuffer, 0);
 
             // Upload the vertex, index and transform data
             context.transfer.transferAndWaitFor(vertices, vertexBuffer);
@@ -398,9 +398,9 @@ private:
 
         } else static if(OPT==2) {
             // Bind to GPU memory
-            context.memory.bind(MEM_GPU, vertexBuffer);
-            context.memory.bind(MEM_GPU, indexBuffer);
-            context.memory.bind(MEM_GPU, transformBuffer);
+            context.memory.bind(MEM_GPU, vertexBuffer, 0);
+            context.memory.bind(MEM_GPU, indexBuffer, 0);
+            context.memory.bind(MEM_GPU, transformBuffer, 0);
 
             // Upload the vertex, index and transform data
             context.transfer.transferAndWaitFor(vertices, vertexBuffer);
@@ -565,14 +565,16 @@ private:
         {
             VkTransformMatrixKHR transformMatrix = identityTransformMatrix();
 
+            // This struct uses bitfields which is not natively supported in D.
             VkAccelerationStructureInstanceKHR instance = {
                 transform: transformMatrix,
-                instanceCustomIndex: 0,
-                mask: 0xFF,
-                instanceShaderBindingTableRecordOffset: 0,
-                flags: VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR,
                 accelerationStructureReference: blas.deviceAddress
             };
+            // Set the bitfield members
+            instance.setInstanceCustomIndex(0);
+            instance.setMask(0xFF);
+            instance.setInstanceShaderBindingTableRecordOffset(0);
+            instance.setFlags(VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR);
 
             // Buffer for instance data
             instanceBuffer = context.buffers.createBuffer(BUF_INSTANCES,
