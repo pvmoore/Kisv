@@ -81,6 +81,17 @@ public:
         auto layers = props.instanceLayers
                            .map!(it=>it.toStringz())
                            .array();
+
+        // Add the debug utils extension if it's supported and not already there.
+        // VK_EXT_debug_utils is preferred to VK_EXT_debug_report
+        bool debugUtilsSupported = extensionProps.find!(it=>it.extensionName.fromStringz() == "VK_EXT_debug_utils") != null;                         
+
+        if(debugUtilsSupported) {
+            if(props.instanceExtensions.find("VK_EXT_debug_utils") == null) {
+                props.instanceExtensions ~= "VK_EXT_debug_utils";
+            }
+        }
+
         auto extensions = props.instanceExtensions
                                .map!(it=>it.toStringz())
                                .array();
@@ -119,19 +130,9 @@ public:
         log("Loading instance functions");
         vkLoadInstanceFunctions(instance);
 
-        // Direct Vulkan debug messages to the kisv.log (via dbgFunc)
-        VkDebugReportCallbackCreateInfoEXT dbgCreateInfo = {
-            sType: VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT,
-            flags: 0
-				| VK_DEBUG_REPORT_ERROR_BIT_EXT
-				| VK_DEBUG_REPORT_WARNING_BIT_EXT
-			//	| VK_DEBUG_REPORT_INFORMATION_BIT_EXT
-            //    | VK_DEBUG_REPORT_DEBUG_BIT_EXT
-				| VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT,
-            pfnCallback: &dbgFunc
-        };
-
-        check(vkCreateDebugReportCallbackEXT(instance, &dbgCreateInfo, null, &debugCallback));
+        if(debugUtilsSupported) {
+            setupDebugUtils();
+        }
     }
     void destroy() {
         log("Destroying Kisv");
@@ -155,7 +156,7 @@ public:
         }
         if(instance) {
             log("\tDestroying instance");
-            if(debugCallback) vkDestroyDebugReportCallbackEXT(instance, debugCallback, null);
+            if(debugUtilsCallback) vkDestroyDebugUtilsMessengerEXT(instance, debugUtilsCallback, null);
             vkDestroyInstance(instance, null);
         }
         log("\tUnloading");
@@ -246,8 +247,33 @@ public:
             "This surface cannot present on queue %s", graphicsQueueFamily);
         this.renderLoop = new KisvRenderLoop(this, graphicsQueueFamily);
     }
+    void setupDebugUtils() {
+        VkDebugUtilsMessengerCreateInfoEXT dbgCreateInfo = {
+            sType: VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+            messageSeverity: 0
+                //| VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
+                //| VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
+                | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
+                | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
+                ,
+            messageType: 0
+                | VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
+                | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+                | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
+                //| VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT
+                ,
+            pfnUserCallback: &debugUtilsMessengerCallbackEXTFunc
+        };
+
+        VkResult result = vkCreateDebugUtilsMessengerEXT(instance, &dbgCreateInfo, null, &debugUtilsCallback);
+        if(result == VK_SUCCESS) {
+            log("VK_EXT_debug_utils extension enabled");
+        } else {
+            log("[WARN] Failed to enable VK_EXT_debug_utils extension: %s", result);
+        }
+    }
 private:
-    VkDebugReportCallbackEXT debugCallback;
+    VkDebugUtilsMessengerEXT debugUtilsCallback;
     void* features2;
     KisvRenderLoop renderLoop;
 }
