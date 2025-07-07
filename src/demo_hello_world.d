@@ -105,8 +105,8 @@ private:
             "VK_KHR_maintenance1"
         ],
         windowed: true,
-        windowWidth: 600,
-        windowHeight: 600,
+        windowWidth: 1200,
+        windowHeight: 1000,
         windowVsync: false
     };
 

@@ -28,6 +28,9 @@ public:
         context.props.windowTitle = title;
         glfwSetWindowTitle(glfwWindow, title.toStringz());
     }
+    string getTitle() {
+        return glfwGetWindowTitle(glfwWindow).fromStringz();
+    }
 
     this(KisvContext context) {
         this.context = context;

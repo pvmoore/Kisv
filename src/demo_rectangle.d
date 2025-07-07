@@ -119,8 +119,8 @@ private:
             "VK_KHR_maintenance1"
         ],
         windowed: true,
-        windowWidth: 800,
-        windowHeight: 800,
+        windowWidth: 1200,
+        windowHeight: 1000,
         windowVsync: false
     };
     struct Vertex { static assert(Vertex.sizeof==8*float.sizeof);

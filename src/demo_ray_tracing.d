@@ -180,7 +180,7 @@ private:
         ],
         windowed: true,
         windowWidth: 1400,
-        windowHeight: 800,
+        windowHeight: 1000,
         windowVsync: false
     };
     static struct UBO { static assert(UBO.sizeof==2*16*4);

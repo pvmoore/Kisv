@@ -27,6 +27,7 @@ public:
         log("║ Render loop started                                             ║");
         log("╚═════════════════════════════════════════════════════════════════╝");
 
+        string title = window.getTitle().strip();
         ulong lastFrameTotalNanos;
         ulong frameTimeNanos;
         ulong elapsedSecond;
@@ -50,6 +51,8 @@ public:
             if(time/1_000_000_000L > elapsedSecond) {
                 elapsedSecond = time/1_000_000_000L;
                 double fps = 1_000_000_000.0 / frameTimeNanos;
+
+                window.setTitle("%s - %.2f fps".format(title, fps));
 
                 log("Frame (number:%s, seconds:%.2f) perSecond=%.4f time:%.3f fps:%.2f",
                     frameNumber,

@@ -5,7 +5,7 @@ public:
 import core.stdc.string         : memcpy;
 
 import std.format               : format;
-import std.string               : toStringz, fromStringz;
+import std.string               : toStringz, fromStringz, strip;
 import std.algorithm            : map, filter, find, maxElement;
 import std.range                : array, empty;
 import std.array                : appender, join;
