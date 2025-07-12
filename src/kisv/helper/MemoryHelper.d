@@ -114,6 +114,24 @@ public:
         MemoryInfo* mem = getMemory(memoryKey);
         vkUnmapMemory(context.device, mem.handle);
     }
+    void flush(string memoryKey, ulong offset, ulong size = VK_WHOLE_SIZE) {
+        MemoryInfo* mem = getMemory(memoryKey);
+        assert(offset < mem.size);
+        assert(size == VK_WHOLE_SIZE || size <= mem.size);
+        assert(mem.flags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+
+        // Coherent memory does not need to be flushed
+        if((mem.flags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) != 0) return;
+
+        VkMappedMemoryRange range = {
+            VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
+            null,
+            mem.handle,
+            offset,
+            size
+        };
+        check(vkFlushMappedMemoryRanges(context.device, 1, &range));
+    }
 private:
     KisvContext context;
     VkMemoryType[] memoryTypes;

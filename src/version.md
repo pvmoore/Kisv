@@ -35,3 +35,7 @@
 ## 0.0.6
 
 - Implement demo_ray_tracing (Not currently working)
+
+## 0.0.7
+
+- Fix ray tracing. Add more ray tracing demos

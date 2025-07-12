@@ -1,4 +1,4 @@
-module demo;
+module demos.demo;
 
 import core.sys.windows.windows :
     HINSTANCE, LPSTR, MessageBoxA, CommandLineToArgvW, GetCommandLineW,
@@ -8,19 +8,14 @@ import core.runtime;
 import std.string   : toStringz, fromStringz;
 import std.utf      : toUTF8;
 
-import demo_hello_world;
-import demo_ray_tracing;
-import demo_rectangle;
+import demos.demo_hello_world;
+import demos.demo_rectangle;
+import demos.raytracing.demo_ray_tracing;
 
 pragma(lib, "user32.lib");
 
-
-//extern(C) __gshared string[] rt_options = [
-//    "gcopt=profile:1"
-//];
-
 interface DemoApplication {
-    void initialise();
+    void initialise(string[] args);
     void run();
     void destroy();
 }
@@ -50,7 +45,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int i
         } else {
             app = new HelloWorld();
         }
-        app.initialise();
+        app.initialise(args);
         app.run();
 
     }catch(Throwable e) {

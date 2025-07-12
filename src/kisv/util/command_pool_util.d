@@ -24,8 +24,8 @@ VkCommandPool createCommandPool(VkDevice device,
 }
 
 VkCommandBuffer allocCommandBuffer(VkDevice device,
-                                     VkCommandPool pool,
-                                     VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY)
+                                   VkCommandPool pool,
+                                   VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY)
 {
     VkCommandBufferAllocateInfo createInfo = {
         sType: VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,

@@ -3,16 +3,18 @@ module kisv;
 public:
 
 /** See version.md for version history details */
-enum VERSION = "0.0.6";
+enum VERSION = "0.0.7";
 
 
 import std.typecons : Tuple, tuple;
 
+import kisv.KisvAccelerationStructure;
 import kisv.KisvContext;
 import kisv.KisvFrame;
 import kisv.KisvGraphicsPipeline;
 import kisv.KisvPhysicalDevice;
 import kisv.KisvProperties;
+import kisv.KisvRayTracingPipeline;
 import kisv.KisvRenderLoop;
 import kisv.KisvWindow;
 

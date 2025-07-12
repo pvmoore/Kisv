@@ -15,5 +15,5 @@ configuration "test" {
 }
 configuration "library" {
 	targetType "library"
-	excludedSourceFiles "src/demo.d" "src/demo_*.d"
+	excludedSourceFiles "src/demos/**"
 }

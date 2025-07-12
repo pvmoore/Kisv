@@ -1,13 +1,13 @@
-module demo_hello_world;
+module demos.demo_hello_world;
 
 import std.format : format;
 
 import kisv;
-import demo : DemoApplication;
+import demos.demo : DemoApplication;
 
 final class HelloWorld : DemoApplication {
 public:
-    override void initialise() {
+    override void initialise(string[] args) {
 
         this.context = new KisvContext(props);
 
@@ -95,13 +95,17 @@ private:
             //"VK_LAYER_LUNARG_api_dump"
             //"VK_LAYER_LUNARG_monitor"
         ],
+        
         instanceExtensions: [
             "VK_KHR_surface",
             "VK_KHR_win32_surface"
         ],
+        // Vulkan 1.1 automatically enables:
+        //  - VK_KHR_maintenance1
+        //  - VK_KHR_maintenance2
+        //  - VK_KHR_maintenance3
         deviceExtensions: [
-            "VK_KHR_swapchain",
-            "VK_KHR_maintenance1"
+            "VK_KHR_swapchain"
         ],
         windowed: true,
         windowWidth: 1200,

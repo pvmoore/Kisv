@@ -42,6 +42,13 @@ T minOf(T)(T a, T b) if(isInteger!T || isReal!T) {
     return a < b ? a : b;
 }
 
+bool isOneOf(T)(T a, T[] values...) {
+    foreach(v; values) {
+        if(v == a) return true;
+    }
+    return false;
+}
+
 template isStruct(T) {
 	const bool isStruct = is(T==struct);
 }

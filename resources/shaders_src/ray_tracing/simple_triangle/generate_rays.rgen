@@ -1,5 +1,6 @@
 #version 460
 #extension GL_EXT_ray_tracing : enable
+#extension GL_EXT_ray_flags_primitive_culling : enable
 
 layout(binding = 0, set = 0) uniform accelerationStructureEXT topLevelAS;
 layout(binding = 1, set = 0, rgba8) uniform image2D image;
@@ -26,11 +27,20 @@ void main()
 
     hitValue = vec3(0.0);
 
+	// Tip: Use gl_RayFlagsSkipAABBEXT if we are not using any AABBs.
+	//      Use gl_RayFlagsCullNoOpaqueEXT if possible.
+
+	const uint sbtRecordOffset = 0;
+	const uint sbtRecordStride = 0;
+	const uint missIndex 	   = 0;
+
     traceRayEXT(
 		topLevelAS,
-		gl_RayFlagsOpaqueEXT,
+		gl_RayFlagsOpaqueEXT | gl_RayFlagsSkipAABBEXT,
 		0xff,
-		0, 0, 0,
+		sbtRecordOffset,
+		sbtRecordStride,
+		missIndex,
 		origin.xyz,
 		tmin,
 		direction.xyz,
