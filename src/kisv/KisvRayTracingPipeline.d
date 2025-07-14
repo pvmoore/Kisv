@@ -217,14 +217,14 @@ private:
 		check(vkGetRayTracingShaderGroupHandlesKHR(context.device, pipeline, firstGroup, groupCount, sbtSize, shaderHandleStorage.ptr));
 
         log("shaderHandleStorage: (%s bytes)", shaderHandleStorage.length);
-        foreach(i; 0..shaderHandleStorage.length / sbtHandleSize) {
-            log("[% 3s]%s", i*sbtHandleSize, shaderHandleStorage[i*sbtHandleSize..i*sbtHandleSize+sbtHandleSize]);
+        foreach(i; 0..shaderHandleStorage.length / sbtHandleSizeAligned) {
+            log("[% 3s]%s", i*sbtHandleSizeAligned, shaderHandleStorage[i*sbtHandleSizeAligned..i*sbtHandleSizeAligned+sbtHandleSizeAligned]);
         }
 
-        uint raygenSize = numRaygenGroups * sbtHandleSize;
-        uint missSize = numMissGroups * sbtHandleSize;
-        uint hitSize = numHitGroups * sbtHandleSize;
-        uint callableSize = numCallableGroups * sbtHandleSize;
+        uint raygenSize = numRaygenGroups * sbtHandleSizeAligned;
+        uint missSize = numMissGroups * sbtHandleSizeAligned;
+        uint hitSize = numHitGroups * sbtHandleSizeAligned;
+        uint callableSize = numCallableGroups * sbtHandleSizeAligned;
 
         log("raygenSize = %s", raygenSize);
         log("missSize = %s", missSize);
