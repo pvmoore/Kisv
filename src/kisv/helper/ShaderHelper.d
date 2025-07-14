@@ -47,6 +47,8 @@ private:
             return;
         }
 
+        log("\tCompiling shader '%s'", key);
+
         auto result = execute(
             [
                 COMPILER,

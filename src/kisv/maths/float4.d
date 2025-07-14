@@ -22,6 +22,13 @@ struct float4 {
     float opIndex(int i) { assert(i >= 0 && i<4); return (&x)[i]; }
 	float opIndexAssign(float value, int i) { assert(i >= 0 && i<4); ptr()[i] = value; return value; }
 
+    float4 opBinary(string op)(float rhs) const {
+        return mixin("float4(x"~op~"rhs, y"~op~"rhs, z"~op~"rhs, w"~op~"rhs)");
+    }
+    float4 opBinary(string op)(float4 rhs) const {
+        return mixin("float4(x"~op~"rhs.x, y"~op~"rhs.y, z"~op~"rhs.z, w"~op~"rhs.w)");
+    }
+
     bool opEquals(inout float4 o) {
         if(!isClose!(float, float)(x, o.x)) return false;
         if(!isClose!(float, float)(y, o.y)) return false;

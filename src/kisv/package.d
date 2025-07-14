@@ -31,6 +31,7 @@ import kisv.helper.ShaderHelper;
 import kisv.helper.TransferHelper;
 
 import kisv.maths.float2;
+import kisv.maths.float3;
 import kisv.maths.float4;
 import kisv.maths.float16;
 

@@ -19,6 +19,16 @@ VkTransformMatrixKHR identityTransformMatrix() {
 
     return transform;
 }
+void translate(ref VkTransformMatrixKHR m, float3 t) {
+    m.matrix[0][3] = t.x;
+    m.matrix[1][3] = t.y;
+    m.matrix[2][3] = t.z;
+}
+void scale(ref VkTransformMatrixKHR m, float3 s) {
+    m.matrix[0][0] = s.x;
+    m.matrix[1][1] = s.y;
+    m.matrix[2][2] = s.z;
+}
 
 /** Display in row-major order */
 string toString(VkTransformMatrixKHR t) {

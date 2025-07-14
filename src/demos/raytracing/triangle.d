@@ -1,4 +1,4 @@
-module demos.raytracing.simple_triangle;
+module demos.raytracing.triangle;
 
 import std.format       : format;
 import std.string       : toStringz;
@@ -7,42 +7,98 @@ import core.stdc.string : memcpy;
 import kisv;
 
 import demos.raytracing.demo_ray_tracing;
+import demos.raytracing.RayTracingSubDemo;
 
-final class SimpleTriangle : RayTracingSubDemo {
+/**
+ * Render a single triangle using a single triangle geometry primitive and the built-in intersection shader.
+ */
+final class Triangle : RayTracingSubDemo {
 public:
-    override KisvRayTracingPipeline getRayTracingPipeline() { return pipeline; }
-    override KisvAccelerationStructure getTopLevelAccelerationStructure() { return tlas; }
-
-    this(KisvContext context) {
-        this.context = context;
+    this(KisvContext context, VkCommandPool commandPool, uint queueFamilyIndex) {
+        super(context, commandPool, queueFamilyIndex);
     }
     override void destroy() {
         if(pipeline) pipeline.destroy();
         if(tlas) tlas.destroy();
         if(blas) blas.destroy();
     }
-    override RayTracingSubDemo createDSLayout(string dsLayoutKey) {
-        createDescriptorSetLayout(dsLayoutKey);
-        return this;
+    override VkShaderStageFlagBits[] getDSShaderStageFlags() {
+        // 0 -> acceleration structure
+        // 1 -> target image
+        // 2 -> uniform buffer
+        // 3 -> storage buffer
+        return [ 
+            VK_SHADER_STAGE_RAYGEN_BIT_KHR, 
+            VK_SHADER_STAGE_RAYGEN_BIT_KHR, 
+            VK_SHADER_STAGE_RAYGEN_BIT_KHR,
+            VK_SHADER_STAGE_RAYGEN_BIT_KHR 
+        ];
     }
-    override RayTracingSubDemo createPipeline(string sbtMemoryKey) {
-        doCreatePipeline(sbtMemoryKey);
-        return this;
+    override KisvRayTracingPipeline getPipeline(string sbtMemoryKey, VkDescriptorSetLayout dsLayout) {
+        doCreatePipeline(sbtMemoryKey, dsLayout);
+        return pipeline;
     }
-    override RayTracingSubDemo createAccelerationStructures(string deviceMemoryKey, VkCommandPool commandPool, uint queueFamilyIndex) {
-        createTriangleBLAS(deviceMemoryKey, commandPool, queueFamilyIndex);
-        createTLAS(deviceMemoryKey, commandPool, queueFamilyIndex);
-        return this;
+    override KisvAccelerationStructure getAccelerationStructures(string deviceMemoryKey) {
+        createTriangleBLAS(deviceMemoryKey);
+        createTLAS(deviceMemoryKey);
+        return tlas;
+    }
+    override VkBuffer getUniformBuffer(string deviceMemoryKey) {
+
+        struct UBO { static assert(UBO.sizeof==2*16*4);
+            float16 viewInverse;
+            float16 projInverse;
+        }
+
+        // Uniform buffers must be a multiple of 16 bytes
+        static assert(UBO.sizeof%16 == 0);
+
+        VkBuffer uniformBuffer = context.buffers.createBuffer(BUF_UNIFORM, UBO.sizeof,
+                                                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT |
+                                                     VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+
+        context.memory.bind(deviceMemoryKey, uniformBuffer, 0);
+
+        UBO ubo;
+
+        ubo.viewInverse = float16.rowMajor(
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 2.5,
+            0, 0, 0, 1
+        );
+        ubo.projInverse = float16.rowMajor(
+            1.010363, 0,        0,         0,
+            0,        0.577350, 0,         0,
+            0,        0,        0,        -1,
+            0,        0,       -9.998046,  10
+        );
+
+        context.transfer.transferAndWaitFor([ubo], uniformBuffer);
+
+        return uniformBuffer;
+    }
+    override VkBuffer getStorageBuffer(string deviceMemoryKey) { 
+        VkBuffer buffer = context.buffers.createBuffer(BUF_STORAGE, 16,
+                                                     VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+                                                     VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+
+        // Bind the buffer to GPU memory
+        context.memory.bind(deviceMemoryKey, buffer, 0);
+        return buffer; 
     }
 private:
     // Keys
     enum : string {
+        BUF_UNIFORM   = "buf_uniform",
+        BUF_STORAGE   = "buf_storage",
+        // blas
         BUF_VERTEX    = "buf_vertex",
         BUF_INDEX     = "buf_index",
-        BUF_TRANSFORM = "buf_trans",
+        BUF_TRANSFORM = "buf_transform",
+        // tlas
         BUF_INSTANCE  = "buf_instance"
     }
-    KisvContext context;
 
     // Objects we must destroy
     KisvRayTracingPipeline pipeline;
@@ -54,44 +110,15 @@ private:
     VkBuffer indexBuffer;       
     VkBuffer transformBuffer;   
     VkBuffer instanceBuffer; 
-    VkDescriptorSetLayout dsLayout;
-
-    void createDescriptorSetLayout(string dsLayoutKey) {
-        // 0 -> acceleration structure
-        // 1 -> target image
-        // 2 -> uniform buffer
-        VkDescriptorSetLayoutBinding accelerationStructureLayoutBinding = {
-            binding: 0,
-            descriptorType: VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
-            descriptorCount: 1,
-            stageFlags: VK_SHADER_STAGE_RAYGEN_BIT_KHR
-        };
-        VkDescriptorSetLayoutBinding resultImageLayoutBinding = {
-            binding: 1,
-            descriptorType: VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-            descriptorCount: 1,
-            stageFlags: VK_SHADER_STAGE_RAYGEN_BIT_KHR
-        };
-        VkDescriptorSetLayoutBinding uniformBufferBinding = {
-            binding: 2,
-            descriptorType: VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            descriptorCount: 1,
-            stageFlags: VK_SHADER_STAGE_RAYGEN_BIT_KHR
-        };
-
-        this.dsLayout = context.descriptors.createLayout(dsLayoutKey,
-            accelerationStructureLayoutBinding,
-            resultImageLayoutBinding,
-            uniformBufferBinding);    
-    }   
-    void doCreatePipeline(string sbtMemoryKey) {
+  
+    void doCreatePipeline(string sbtMemoryKey, VkDescriptorSetLayout dsLayout) {
         this.pipeline = new KisvRayTracingPipeline(context, sbtMemoryKey);
 
         pipeline.addDescriptorSetLayout(dsLayout);
 
-        pipeline.addShader(VK_SHADER_STAGE_RAYGEN_BIT_KHR, context.shaders.get("ray_tracing/simple_triangle/generate_rays.rgen", "spirv1.4"));
-        pipeline.addShader(VK_SHADER_STAGE_MISS_BIT_KHR, context.shaders.get("ray_tracing/simple_triangle/miss.rmiss", "spirv1.4"));
-        pipeline.addShader(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, context.shaders.get("ray_tracing/simple_triangle/hit_closest.rchit", "spirv1.4"));
+        pipeline.addShader(VK_SHADER_STAGE_RAYGEN_BIT_KHR, context.shaders.get("ray_tracing/triangle/generate_rays.rgen", "spirv1.4"));
+        pipeline.addShader(VK_SHADER_STAGE_MISS_BIT_KHR, context.shaders.get("ray_tracing/triangle/miss.rmiss", "spirv1.4"));
+        pipeline.addShader(VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, context.shaders.get("ray_tracing/triangle/hit_closest.rchit", "spirv1.4"));
 
         pipeline.addRaygenGroup(0);
         pipeline.addMissGroup(1);
@@ -99,7 +126,7 @@ private:
 
         pipeline.build();
     }
-    void createTriangleBLAS(string deviceMemoryKey, VkCommandPool commandPool, uint queueFamilyIndex) {
+    void createTriangleBLAS(string deviceMemoryKey) {
 
         static struct Vertex { static assert(Vertex.sizeof==12);
 		    float x,y,z;
@@ -155,18 +182,10 @@ private:
         };  
 
         blas.addTriangles(VK_GEOMETRY_OPAQUE_BIT_KHR, triangles, numTriangles);
-
-        VkCommandBuffer cmd = allocCommandBuffer(context.device, commandPool);
-
-        cmd.beginOneTimeSubmit();
-        blas.buildAll(cmd, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
-        cmd.end();
-
-        context.queues.getQueue(queueFamilyIndex, 0).submitAndWaitFor(cmd, context);
-
-        freeCommandBuffer(context.device, commandPool, cmd);
+        
+        buildAccelerationStructure(blas);
     }
-    void createTLAS(string deviceMemoryKey, VkCommandPool commandPool, uint queueFamilyIndex) {
+    void createTLAS(string deviceMemoryKey) {
         // Create and upload instance data
         {
             VkTransformMatrixKHR transformMatrix = identityTransformMatrix();
@@ -209,14 +228,6 @@ private:
 
         tlas.addInstances(VK_GEOMETRY_OPAQUE_BIT_KHR, instances, 1);
 
-        VkCommandBuffer cmd = allocCommandBuffer(context.device, commandPool);
-
-        cmd.beginOneTimeSubmit();
-        tlas.buildAll(cmd, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR);
-        cmd.end();
-
-        context.queues.getQueue(queueFamilyIndex, 0).submitAndWaitFor(cmd, context);
-
-        freeCommandBuffer(context.device, commandPool, cmd);
+        buildAccelerationStructure(tlas);
     }
 }

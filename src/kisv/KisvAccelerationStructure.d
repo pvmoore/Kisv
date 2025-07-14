@@ -74,9 +74,9 @@ public:
         assert(instances.data.deviceAddress);
 
         // Note that this can contain multiple instances if instance.arrayOfPointers is true
-        if(instances.arrayOfPointers || numInstances > 1) {
-            assert(false, "Implement array of pointers");
-        }
+        // if(instances.arrayOfPointers || numInstances > 1) {
+        //     assert(false, "Implement array of pointers");
+        // }
 
         VkAccelerationStructureGeometryKHR geometry = {
             sType: VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR,
@@ -92,7 +92,7 @@ public:
         };
         geometries ~= geometry;
         buildRangeInfos ~= buildRangeInfo;
-        maxPrimitiveCounts ~= 1;
+        maxPrimitiveCounts ~= numInstances;
         return this;
     }
     /**

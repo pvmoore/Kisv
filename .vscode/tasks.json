@@ -39,10 +39,28 @@
             "problemMatcher": []
         },
         {
-            "label": "**** Ray Tracing -- Keep It Simple Vulkan ****",
+            "label": "**** Ray Tracing -- Triangle ****",
             "type": "shell",
             "windows": {
-                "command": "./build_and_run.bat test raytracing",
+                "command": "./build_and_run.bat test raytracing triangle",
+                "options": {
+                    "env": {
+                        "VK_LOADER_DEBUG": "all"
+                    }
+                }
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "**** Ray Tracing -- Spheres ****",
+            "type": "shell",
+            "windows": {
+                "command": "./build_and_run.bat test raytracing spheres",
                 "options": {
                     "env": {
                         "VK_LOADER_DEBUG": "all"

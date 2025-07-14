@@ -56,6 +56,10 @@ public:
         descriptorSetLayouts ~= layout;
         return this;
     }
+    auto setMaxRecursionDepth(int depth) {
+        this.maxRecursionDepth = minOf(depth, context.physicalDevice.rtPipelineProperties.maxRayRecursionDepth);
+        return this;
+    }
     auto addRaygenGroup(uint shaderIndex) {
         numRaygenGroups++;
         addGroup(VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR, 
@@ -109,7 +113,9 @@ public:
         assert(stage.isOneOf(VK_SHADER_STAGE_RAYGEN_BIT_KHR,
                              VK_SHADER_STAGE_ANY_HIT_BIT_KHR,
                              VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
-                             VK_SHADER_STAGE_MISS_BIT_KHR));
+                             VK_SHADER_STAGE_MISS_BIT_KHR,
+                             VK_SHADER_STAGE_INTERSECTION_BIT_KHR,
+                             VK_SHADER_STAGE_CALLABLE_BIT_KHR));
     }
     do{
         VkPipelineShaderStageCreateInfo createInfo = {

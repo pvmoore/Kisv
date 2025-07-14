@@ -6,22 +6,15 @@ import core.stdc.string : memcpy;
 
 import kisv;
 import demos.demo : DemoApplication;
-import demos.raytracing.simple_triangle;
-
-interface RayTracingSubDemo {
-    KisvRayTracingPipeline getRayTracingPipeline();
-    KisvAccelerationStructure getTopLevelAccelerationStructure();
-    void destroy();
-
-    RayTracingSubDemo createDSLayout(string dsLayoutKey);
-    RayTracingSubDemo createPipeline(string sbtMemoryKey);
-    RayTracingSubDemo createAccelerationStructures(string deviceMemoryKey, VkCommandPool commandPool, uint queueFamilyIndex);
-}
+import demos.raytracing.triangle;
+import demos.raytracing.spheres;
+import demos.raytracing.RayTracingSubDemo;
 
 final class RayTracing : DemoApplication {
 public:
     override void initialise(string[] args) {
         this.context = new KisvContext(props);
+        this.args = args;
 
         context.selectPhysicalDevice((KisvPhysicalDevice[] devices) {
             foreach(i, d; devices) {
@@ -161,20 +154,19 @@ private:
         windowHeight: 1000,
         windowVsync: false
     };
-    static struct UBO { static assert(UBO.sizeof==2*16*4);
-        float16 viewInverse;
-        float16 projInverse;
-    }
-    UBO ubo;                    
+    string[] args;                  
     VkClearValue bgColour;
     KisvContext context;
     uint graphicsComputeQueueFamily;
     uint transferQueueFamily;
     VkCommandPool buildCommandPool;
 
-    VkBuffer uniformBuffer; 
-    VkImage storageImage;       
+    VkImage storageImage;
+
+    VkBuffer uniformBuffer;
+    VkBuffer storageBuffer; 
     VkDescriptorSet descriptorSet;
+    VkDescriptorSetLayout dsLayout;
 
     RayTracingSubDemo demo;
     KisvRayTracingPipeline pipeline;
@@ -205,18 +197,30 @@ private:
         logStructure(context.physicalDevice.rtPipelineProperties);
         logStructure(context.physicalDevice.accelerationStructureProperties);
 
-        allocateMemory();
         createBuildCommandPool();
-        createAndUploadUniformBuffer();
+        allocateMemory();
         createStorageImage();
 
-        this.demo = new SimpleTriangle(context)
-            .createDSLayout(DS_LAYOUT)
-            .createPipeline(MEM_UPLOAD)
-            .createAccelerationStructures(MEM_GPU, buildCommandPool, graphicsComputeQueueFamily);
+        string subDemo = args.length > 2 ? args[2] : "triangle";
+        log("Selecting sub demo '%s'", subDemo);
 
-        this.pipeline = demo.getRayTracingPipeline();
-        this.tlas = demo.getTopLevelAccelerationStructure();
+        switch(subDemo) {
+            case "spheres":
+                this.demo = new Spheres(context, buildCommandPool, graphicsComputeQueueFamily);
+                break;
+            default:
+                this.demo = new Triangle(context, buildCommandPool, graphicsComputeQueueFamily);
+                break;
+        }        
+
+        // This uses data from the SubDemo so needs to be called after the sub demo is created
+        createDescriptorSetLayout();
+
+        // This needs the descriptor set layout
+        this.pipeline = demo.getPipeline(MEM_UPLOAD, dsLayout);
+        this.tlas = demo.getAccelerationStructures(MEM_GPU);
+        this.storageBuffer = demo.getStorageBuffer(MEM_GPU);
+        this.uniformBuffer = demo.getUniformBuffer(MEM_GPU);
 
         createDescriptorSet();
     }
@@ -228,41 +232,6 @@ private:
         context.memory.allocateStagingUploadMemory(MEM_UPLOAD, 16.megabytes(), VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT);
 
         context.memory.allocateStagingDownloadMemory(MEM_DOWNLOAD, 16.megabytes(), VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT);
-    }
-    void createAndUploadUniformBuffer() {
-        enum uniformSize = UBO.sizeof;
-
-        // Uniform buffers must be a multiple of 16 bytes
-        static assert(uniformSize%16 == 0);
-
-        // Create the buffer
-        uniformBuffer = context.buffers.createBuffer(BUF_UNIFORM, uniformSize,
-                                                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT |
-                                                     VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-
-        // Bind the buffer to GPU memory
-        context.memory.bind(MEM_GPU, uniformBuffer, 0);
-
-        // Initialise the view and projection matrices
-
-        ubo.viewInverse = float16.rowMajor(
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 1, 2.5,
-            0, 0, 0, 1
-        );
-        ubo.projInverse = float16.rowMajor(
-            1.010363, 0,        0,         0,
-            0,        0.577350, 0,         0,
-            0,        0,        0,        -1,
-            0,        0,       -9.998046,  10
-        );
-
-        log("viewInverse:\n%s", ubo.viewInverse);
-        log("projInverse:\n%s", ubo.projInverse);
-
-        log("Uploading uniform buffer data to the GPU");
-        context.transfer.transferAndWaitFor([ubo], uniformBuffer);
     }
     void createStorageImage() {
         this.storageImage = context.images.createImage(
@@ -277,11 +246,57 @@ private:
         this.buildCommandPool = createCommandPool(context.device, graphicsComputeQueueFamily,
             VK_COMMAND_POOL_CREATE_TRANSIENT_BIT);
     }
+    void createDescriptorSetLayout() {
+        // 0 -> acceleration structure
+        // 1 -> target image
+        // 2 -> uniform buffer
+        // 3 -> storage buffer
+
+        VkShaderStageFlagBits[] stageFlags = demo.getDSShaderStageFlags();
+        assert(stageFlags.length == 4);
+
+        VkDescriptorSetLayoutBinding accelerationStructureLayoutBinding = {
+            binding: 0,
+            descriptorType: VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
+            descriptorCount: 1,
+            stageFlags: stageFlags[0]
+        };
+        VkDescriptorSetLayoutBinding resultImageLayoutBinding = {
+            binding: 1,
+            descriptorType: VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+            descriptorCount: 1,
+            stageFlags: stageFlags[1]
+        };
+        VkDescriptorSetLayoutBinding uniformBufferBinding = {
+            binding: 2,
+            descriptorType: VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            descriptorCount: 1,
+            stageFlags: stageFlags[2]
+        };
+        VkDescriptorSetLayoutBinding storageBufferBinding = {
+            binding: 3,
+            descriptorType: VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            descriptorCount: 1,
+            stageFlags: stageFlags[3]
+        };
+
+        this.dsLayout = context.descriptors.createLayout(DS_LAYOUT,
+            accelerationStructureLayoutBinding,
+            resultImageLayoutBinding,
+            uniformBufferBinding,
+            storageBufferBinding
+        );    
+    } 
     void createDescriptorSet() {
+        // 0 -> acceleration structure
+        // 1 -> target image
+        // 2 -> uniform buffer
+        // 3 -> storage buffer
         VkDescriptorPoolSize[] poolSizes = [
             VkDescriptorPoolSize(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1),
             VkDescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1),
-            VkDescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)
+            VkDescriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
+            VkDescriptorPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1)
         ];
 
         context.descriptors.createPool(DS_POOL, 1, poolSizes);
@@ -332,10 +347,26 @@ private:
             pBufferInfo: [uniformBufferInfo].ptr
         };
 
+        VkDescriptorBufferInfo storageBufferInfo = {
+            buffer: storageBuffer,
+            offset: 0,
+            range: VK_WHOLE_SIZE
+        };
+        VkWriteDescriptorSet storageWrite = {
+            sType: VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            dstSet: descriptorSet,
+            dstBinding: 3,
+            dstArrayElement: 0,
+            descriptorCount: 1,
+            descriptorType: VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            pBufferInfo: [storageBufferInfo].ptr
+        };
+
         VkWriteDescriptorSet[] writes = [
             accelerationStructureWrite,
             imageWrite,
-            uniformWrite
+            uniformWrite,
+            storageWrite
         ];
 
         vkUpdateDescriptorSets(context.device, writes.length.as!uint, writes.ptr, 0, null);
@@ -455,7 +486,6 @@ private:
                                  1,                 // imageMemoryBarrierCount
                                  &swapchainToTransferDst);
 
-        // copy here
         VkImageCopy copyRegion = {
             srcSubresource: VkImageSubresourceLayers(VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1),
             srcOffset: VkOffset3D(0, 0, 0),

@@ -16,6 +16,13 @@ struct float2 {
     float opIndex(int i) { assert(i >= 0 && i<2); return (&x)[i]; }
 	float opIndexAssign(float value, int i) { assert(i >= 0 && i<2); ptr()[i] = value; return value; }
 
+    float2 opBinary(string op)(float rhs) const {
+        return mixin("float2(x"~op~"rhs, y"~op~"rhs, z"~op~"rhs)");
+    }
+    float2 opBinary(string op)(float2 rhs) const {
+        return mixin("float2(x"~op~"rhs.x, y"~op~"rhs.y)");
+    }
+
     bool opEquals(inout float2 o) {
         if(!isClose!(float, float)(x, o.x)) return false;
         if(!isClose!(float, float)(y, o.y)) return false;
