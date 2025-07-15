@@ -169,7 +169,7 @@ private:
             // A single BLAS containing multiple spheres
             foreach(i; 0..NUM_SPHERES) {
                 float3 origin = float3(uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1) * 30;
-                float radius = uniform01(rng) * 10 + 1;
+                float radius = maxOf(1, uniform01(rng) * 10);
                 float4 colour = float4(uniform01(rng) + 0.2, uniform01(rng) + 0.2, uniform01(rng) + 0.2, 1);
                 
                 spheres ~= Sphere(origin, radius, colour);
@@ -183,7 +183,7 @@ private:
             // Multiple TLAS instances with different transforms
             foreach(i; 0..NUM_SPHERES) {
                 float3 origin = float3(uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1, uniform01(rng) * 2 - 1) * 30;
-                float radius = uniform01(rng) * 10 + 1;
+                float radius = maxOf(1, uniform01(rng) * 10);
                 float4 colour = float4(uniform01(rng) + 0.2, uniform01(rng) + 0.2, uniform01(rng) + 0.2, 1);
                 spheres ~= Sphere(origin, radius, colour);
 
