@@ -92,7 +92,7 @@ public:
         };
         geometries ~= geometry;
         buildRangeInfos ~= buildRangeInfo;
-        maxPrimitiveCounts ~= numInstances;
+        maxPrimitiveCounts ~= numInstances; 
         return this;
     }
     /**
@@ -114,11 +114,7 @@ public:
         createScratchBuffer();
         createAccelerationStructure();
 
-        VkAccelerationStructureBuildRangeInfoKHR*[] rangePtrs;
-        foreach(ref range; buildRangeInfos) {
-            rangePtrs ~= &range;
-        }
-        doBuild(cmd, buildFlags, rangePtrs);
+        doBuild(cmd, buildFlags);
 
         return this;
     }
@@ -209,13 +205,7 @@ private:
         deviceAddress = getDeviceAddress(context.device, handle);
     }
 
-    void doBuild(VkCommandBuffer cmd, 
-                 VkBuildAccelerationStructureFlagsKHR buildFlags, 
-                 VkAccelerationStructureBuildRangeInfoKHR*[] rangePtrs) 
-    in{
-        assert(rangePtrs.length > 0);
-    }
-    do{
+    void doBuild(VkCommandBuffer cmd, VkBuildAccelerationStructureFlagsKHR buildFlags) {
         VkAccelerationStructureBuildGeometryInfoKHR buildGeometryInfo = {
             sType: VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR,
             type: type,
@@ -229,6 +219,11 @@ private:
             }
         };
 
+        // We are building a single acceleration structure from multiple geometries.
+        // The ppBuildRangeInfos should be a single ptr to an array of VkAccelerationStructureBuildRangeInfoKHR structs
+        // where the array length == geomtry length
+        VkAccelerationStructureBuildRangeInfoKHR*[] rangePtrs = [ buildRangeInfos.ptr ];
+
         vkCmdBuildAccelerationStructuresKHR(
             cmd,
             1,
@@ -237,13 +232,7 @@ private:
         );
     }
 
-    void doUpdate(VkCommandBuffer cmd, 
-                  VkBuildAccelerationStructureFlagsKHR buildFlags, 
-                  VkAccelerationStructureBuildRangeInfoKHR*[] rangePtrs) 
-    in{
-        assert(rangePtrs.length > 0);
-    }
-    do{
+    void doUpdate(VkCommandBuffer cmd, VkBuildAccelerationStructureFlagsKHR buildFlags) {
         VkAccelerationStructureBuildGeometryInfoKHR buildGeometryInfo = {
             sType: VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR,
             type: type,
@@ -257,6 +246,11 @@ private:
                 deviceAddress: scratchBufferDeviceAddress
             }
         };
+
+        // We are building a single acceleration structure from multiple geometries.
+        // The ppBuildRangeInfos should be a single ptr to an array of VkAccelerationStructureBuildRangeInfoKHR structs
+        // where the array length == geomtry length
+        VkAccelerationStructureBuildRangeInfoKHR*[] rangePtrs = [ buildRangeInfos.ptr ];
 
         vkCmdBuildAccelerationStructuresKHR(
             cmd,
